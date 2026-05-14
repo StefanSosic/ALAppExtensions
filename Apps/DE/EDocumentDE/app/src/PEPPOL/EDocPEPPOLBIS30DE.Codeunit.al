@@ -1,17 +1,19 @@
 namespace Microsoft.eServices.EDocument.IO.Peppol;
 
 using Microsoft.eServices.EDocument;
-using Microsoft.Sales.Customer;
-using Microsoft.Sales.History;
-using System.Utilities;
-using Microsoft.Sales.Peppol;
 using Microsoft.eServices.EDocument.Formats;
-using Microsoft.Sales.Document;
+using Microsoft.Foundation.Company;
 using Microsoft.Purchases.Document;
+using Microsoft.Sales.Customer;
+using Microsoft.Sales.Document;
+using Microsoft.Sales.History;
+using Microsoft.Sales.Peppol;
+using Microsoft.Service.Document;
+using Microsoft.Service.History;
+using System.Utilities;
 
 codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
 {
-    Access = Internal;
     InherentEntitlements = X;
     InherentPermissions = X;
     Permissions =
@@ -20,6 +22,7 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
 
     var
         EDocPEPPOLBIS30: Codeunit "EDoc PEPPOL BIS 3.0";
+        EDocPEPPOLValidationDE: Codeunit "EDoc PEPPOL Validation DE";
         UBLInvoiceNamespaceTxt: Label 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2', Locked = true;
         UBLCrMemoNamespaceTxt: Label 'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2', Locked = true;
         UBLCACNamespaceTxt: Label 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2', Locked = true;
@@ -28,7 +31,9 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
     procedure Check(var SourceDocumentHeader: RecordRef; EDocumentService: Record "E-Document Service"; EDocumentProcessingPhase: Enum "E-Document Processing Phase")
     begin
         CheckBuyerReferenceMandatory(EDocumentService, SourceDocumentHeader);
+        BindSubscription(EDocPEPPOLValidationDE);
         EDocPEPPOLBIS30.Check(SourceDocumentHeader, EDocumentService, EDocumentProcessingPhase);
+        UnbindSubscription(EDocPEPPOLValidationDE);
     end;
 
     procedure Create(EDocumentService: Record "E-Document Service"; var EDocument: Record "E-Document"; var SourceDocumentHeader: RecordRef; var SourceDocumentLines: RecordRef; var TempBlob: Codeunit "Temp Blob")
@@ -52,6 +57,8 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
         DefaultNamespaceUri: Text;
         XmlDocText: Text;
     begin
+        if not TempBlob.HasValue() then
+            exit;
         TempBlob.CreateInStream(InStream);
         XmlDocument.ReadFrom(InStream, XMLDoc);
         XmlNSManager.NameTable(XMLDoc.NameTable());
@@ -72,9 +79,10 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
         if AttributeNodeList.Count() = 0 then
             exit;
 
-        // remove the "schemeID" attribute from each found element
+        // remove the "schemeID" attribute from each found element, except EndpointID (BR-62, BR-63 require schemeID)
         foreach XmlNode in AttributeNodeList do
-            XmlNode.AsXmlElement().RemoveAttribute('schemeID');
+            if XmlNode.AsXmlElement().LocalName() <> 'EndpointID' then
+                XmlNode.AsXmlElement().RemoveAttribute('schemeID');
 
         Clear(TempBlob);
         TempBlob.CreateOutStream(OutStream, TextEncoding::UTF8);
@@ -127,6 +135,15 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
 
         EDocServiceSupportedType."Source Document Type" := Enum::"E-Document Type"::"Sales Credit Memo";
         EDocServiceSupportedType.Insert();
+
+        EDocServiceSupportedType."Source Document Type" := Enum::"E-Document Type"::"Service Invoice";
+        EDocServiceSupportedType.Insert();
+
+        EDocServiceSupportedType."Source Document Type" := Enum::"E-Document Type"::"Service Credit Memo";
+        EDocServiceSupportedType.Insert();
+
+        EDocServiceSupportedType."Source Document Type" := Enum::"E-Document Type"::"Service Order";
+        EDocServiceSupportedType.Insert();
     end;
 
     local procedure CheckBuyerReferenceMandatory(EDocumentService: Record "E-Document Service"; SourceDocumentHeader: RecordRef)
@@ -140,6 +157,16 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
             exit;
 
         if not EDocumentService."Buyer Reference Mandatory" then
+            exit;
+
+        if not (SourceDocumentHeader.Number in
+            [Database::"Sales Header",
+            Database::"Sales Invoice Header",
+            Database::"Sales Cr.Memo Header",
+            Database::"Service Header",
+            Database::"Service Invoice Header",
+            Database::"Service Cr.Memo Header"])
+        then
             exit;
 
         case EDocumentService."Buyer Reference" of
@@ -163,6 +190,8 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
     var
         SalesInvoiceHeader: Record "Sales Invoice Header";
         SalesCrMemoHeader: Record "Sales Cr.Memo Header";
+        ServiceInvoiceHeader: Record "Service Invoice Header";
+        ServiceCrMemoHeader: Record "Service Cr.Memo Header";
         Customer: Record Customer;
         CustomerNoFieldRef: FieldRef;
         YourReferenceFieldRef: FieldRef;
@@ -195,6 +224,19 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
                     SalesCrMemoHeader.Validate("Buyer Reference", BuyerReference);
                     SalesCrMemoHeader.Modify(true);
                 end;
+
+            Database::"Service Invoice Header":
+                begin
+                    SourceDocumentHeader.SetTable(ServiceInvoiceHeader);
+                    ServiceInvoiceHeader.Validate("Buyer Reference", BuyerReference);
+                    ServiceInvoiceHeader.Modify(true);
+                end;
+            Database::"Service Cr.Memo Header":
+                begin
+                    SourceDocumentHeader.SetTable(ServiceCrMemoHeader);
+                    ServiceCrMemoHeader.Validate("Buyer Reference", BuyerReference);
+                    ServiceCrMemoHeader.Modify(true);
+                end;
         end;
     end;
 
@@ -226,20 +268,32 @@ codeunit 11035 "EDoc PEPPOL BIS 3.0 DE" implements "E-Document"
             BuyerReference := '';
     end;
 
+    local procedure SetSellerContactFromCompanyInformation(var ContactName: Text; var PhoneNumber: Text; var EmailAddress: Text)
+    var
+        CompanyInformation: Record "Company Information";
+    begin
+        CompanyInformation.SetLoadFields("Contact Person", "Phone No.", "E-Mail");
+        CompanyInformation.Get();
+        ContactName := CompanyInformation."Contact Person";
+        PhoneNumber := CompanyInformation."Phone No.";
+        EmailAddress := CompanyInformation."E-Mail";
+    end;
+
     [IntegrationEvent(false, false)]
     local procedure OnCheckBuyerReferenceOnElseCase(var SourceDocumentHeader: RecordRef; EDocumentService: Record "E-Document Service")
     begin
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"PEPPOL Validation", 'OnCheckSalesDocumentOnBeforeCheckYourReference', '', false, false)]
-    local procedure SkipCheckOnCheckSalesDocumentOnBeforeCheckYourReference(SalesHeader: Record "Sales Header"; var IsHandled: Boolean)
-    begin
-        IsHandled := true;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"PEPPOL Management", 'OnAfterGetBuyerReference', '', false, false)]
     local procedure SetReferenceOnAfterGetBuyerReference(SalesHeader: Record "Sales Header"; var BuyerReference: Text)
     begin
         BuyerReference := SalesHeader."Buyer Reference";
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"PEPPOL Management", 'OnAfterGetAccountingSupplierPartyContact', '', false, false)]
+    local procedure SetContactInfoOnAfterGetAccountingSupplierPartyContact(SalesHeader: Record "Sales Header"; var ContactID: Text; var ContactName: Text; var Telephone: Text; var Telefax: Text; var ElectronicMail: Text)
+    begin
+        if SalesHeader."Salesperson Code" = '' then
+            SetSellerContactFromCompanyInformation(ContactName, Telephone, ElectronicMail);
     end;
 }

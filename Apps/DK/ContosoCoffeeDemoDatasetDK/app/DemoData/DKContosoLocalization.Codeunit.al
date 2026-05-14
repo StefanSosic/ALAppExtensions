@@ -5,16 +5,16 @@
 
 namespace Microsoft.DemoData.Localization;
 
-using Microsoft.DemoTool;
-using Microsoft.DemoData.Finance;
-using Microsoft.DemoData.Inventory;
 using Microsoft.DemoData.Bank;
-using Microsoft.DemoData.Jobs;
-using Microsoft.DemoData.HumanResources;
-using Microsoft.DemoData.Sales;
+using Microsoft.DemoData.Finance;
 using Microsoft.DemoData.FixedAsset;
-using Microsoft.DemoData.Purchases;
 using Microsoft.DemoData.Foundation;
+using Microsoft.DemoData.HumanResources;
+using Microsoft.DemoData.Inventory;
+using Microsoft.DemoData.Jobs;
+using Microsoft.DemoData.Purchases;
+using Microsoft.DemoData.Sales;
+using Microsoft.DemoTool;
 
 codeunit 13750 "DK Contoso Localization"
 {
@@ -45,7 +45,7 @@ codeunit 13750 "DK Contoso Localization"
         if Module = Enum::"Contoso Demo Data Module"::"Human Resources Module" then
             HumanResource(ContosoDemoDataLevel);
 
-        UnBindSubscriptionDemoData(Module);
+        UnBindSubscriptionDemoData(ContosoDemoDataLevel, Module);
     end;
 
     local procedure HumanResource(ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
@@ -59,16 +59,10 @@ codeunit 13750 "DK Contoso Localization"
     end;
 
     local procedure FoundationModule(ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
-    var
-        CreatePostingGroupsDK: Codeunit "Create Posting Groups DK";
     begin
         case ContosoDemoDataLevel of
             Enum::"Contoso Demo Data Level"::"Setup Data":
-                begin
-                    Codeunit.Run(Codeunit::"Create Post Code DK");
-                    Codeunit.Run(Codeunit::"Create VAT Posting Groups DK");
-                    CreatePostingGroupsDK.InsertGenPostingGroup();
-                end;
+                Codeunit.Run(Codeunit::"Create Post Code DK");
             Enum::"Contoso Demo Data Level"::"Master Data":
                 Codeunit.Run(Codeunit::"Create Company Information DK");
         end;
@@ -83,7 +77,6 @@ codeunit 13750 "DK Contoso Localization"
         case ContosoDemoDataLevel of
             Enum::"Contoso Demo Data Level"::"Setup Data":
                 begin
-                    Codeunit.Run(Codeunit::"Create VAT Posting Groups DK");
                     Codeunit.Run(Codeunit::"Create Posting Groups DK");
                     CreateVatPostingGroupDK.UpdateVATPostingSetup();
                     CreatePostingGroupsDK.UpdateGenPostingSetup();
@@ -143,8 +136,9 @@ codeunit 13750 "DK Contoso Localization"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Contoso Demo Tool", 'OnBeforeGeneratingDemoData', '', false, false)]
-    local procedure OnBeforeGeneratingDemoData(Module: Enum "Contoso Demo Data Module")
+    local procedure OnBeforeGeneratingDemoData(Module: Enum "Contoso Demo Data Module"; ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
     var
+        FinanceModuleSetup: Record "Finance Module Setup";
         CreatePostingGroupsDK: Codeunit "Create Posting Groups DK";
         CreateAnalysisViewDK: Codeunit "Create Analysis View DK";
         CreateAccScheduleLineDK: Codeunit "Create Acc. Schedule Line DK";
@@ -175,6 +169,13 @@ codeunit 13750 "DK Contoso Localization"
         case Module of
             Enum::"Contoso Demo Data Module"::Finance:
                 begin
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Setup Data" then begin
+                        FinanceModuleSetup.InitRecord();
+                        Codeunit.Run(Codeunit::"Create Vat Posting Groups DK");
+                        CreatePostingGroupsDK.InsertGenPostingGroup();
+                    end;
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        Codeunit.Run(Codeunit::"Create Allocation Account DK");
                     BindSubscription(CreatePostingGroupsDK);
                     BindSubscription(CreateAnalysisViewDK);
                     BindSubscription(CreateAccScheduleLineDK);
@@ -197,7 +198,8 @@ codeunit 13750 "DK Contoso Localization"
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
                     BindSubscription(CreateInvPostingSetupDK);
-                    BindSubscription(CreateItemDK);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        BindSubscription(CreateItemDK);
                     BindSubscription(CreateLocationDK);
                 end;
             Enum::"Contoso Demo Data Module"::Purchase:
@@ -225,7 +227,7 @@ codeunit 13750 "DK Contoso Localization"
     end;
 
 
-    local procedure UnBindSubscriptionDemoData(Module: Enum "Contoso Demo Data Module")
+    local procedure UnBindSubscriptionDemoData(ContosoDemoDataLevel: Enum "Contoso Demo Data Level"; Module: Enum "Contoso Demo Data Module")
     var
         CreatePostingGroupsDK: Codeunit "Create Posting Groups DK";
         CreateAnalysisViewDK: Codeunit "Create Analysis View DK";
@@ -279,7 +281,8 @@ codeunit 13750 "DK Contoso Localization"
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
                     UnBindSubscription(CreateInvPostingSetupDK);
-                    UnBindSubscription(CreateItemDK);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        UnBindSubscription(CreateItemDK);
                     UnBindSubscription(CreateLocationDK);
                 end;
             Enum::"Contoso Demo Data Module"::Purchase:

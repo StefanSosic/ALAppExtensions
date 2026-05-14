@@ -20,19 +20,12 @@ codeunit 10708 "Create Posting Groups NO"
 
     local procedure InsertGenPostingGroup()
     var
-        CreateVATPostingGroupsNO: Codeunit "Create VAT Posting Groups NO";
+        FinanceModuleSetup: Record "Finance Module Setup";
         ContosoPostingGroup: Codeunit "Contoso Posting Group";
-        CreatePostingGroups: Codeunit "Create Posting Groups";
     begin
-        ContosoPostingGroup.InsertGenProductPostingGroup(NoVatPostingGroup(), NoVatDescriptionLbl, CreateVATPostingGroupsNO.Without());
+        FinanceModuleSetup.Get();
 
-        ContosoPostingGroup.SetOverwriteData(true);
-        ContosoPostingGroup.InsertGenProductPostingGroup(CreatePostingGroups.FreightPostingGroup(), FreightDescriptionLbl, CreateVATPostingGroupsNO.High());
-        ContosoPostingGroup.InsertGenProductPostingGroup(CreatePostingGroups.MiscPostingGroup(), MiscDescriptionLbl, CreateVATPostingGroupsNO.High());
-        ContosoPostingGroup.InsertGenProductPostingGroup(CreatePostingGroups.RawMatPostingGroup(), RawMatDescriptionLbl, CreateVATPostingGroupsNO.High());
-        ContosoPostingGroup.InsertGenProductPostingGroup(CreatePostingGroups.RetailPostingGroup(), RetailDescriptionLbl, CreateVATPostingGroupsNO.High());
-        ContosoPostingGroup.InsertGenProductPostingGroup(CreatePostingGroups.ServicesPostingGroup(), ServicesDescriptionLbl, CreateVATPostingGroupsNO.Low());
-        ContosoPostingGroup.SetOverwriteData(false);
+        ContosoPostingGroup.InsertGenProductPostingGroup(NoVatPostingGroup(), NoVatDescriptionLbl, FinanceModuleSetup."VAT Prod. Post Grp. NO VAT");
     end;
 
     local procedure InsertGenBusinessPostingGroup()
@@ -78,18 +71,22 @@ codeunit 10708 "Create Posting Groups NO"
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustDom(), NoVatPostingGroup(), CreateGLAccount.SalesRawMaterialsDom(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustDom(), CreatePostingGroups.RetailPostingGroup(), CreateGLAccount.SalesRetailDom(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustDom(), CreatePostingGroups.ServicesPostingGroup(), CreateGLAccount.SalesResourcesDom(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CustDom(), CreatePostingGroups.MiscPostingGroup(), CreateGLAccount.SalesResourcesDom(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustFor(), NoVatPostingGroup(), CreateGLAccount.SalesRawMaterialsDom(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustFor(), CreatePostingGroups.RetailPostingGroup(), CreateGLAccount.SalesRetailExport(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CustFor(), CreatePostingGroups.ServicesPostingGroup(), CreateGLAccount.SalesResourcesExport(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CustFor(), CreatePostingGroups.MiscPostingGroup(), CreateGLAccount.SalesResourcesExport(), '', CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendDom(), NoVatPostingGroup(), '', CreateGLAccount.PurchRetailDom(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendDom(), CreatePostingGroups.RetailPostingGroup(), '', CreateGLAccount.PurchRetailDom(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendDom(), CreatePostingGroups.ServicesPostingGroup(), '', CreateGLAccount.PurchRetailDom(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(VendDom(), CreatePostingGroups.MiscPostingGroup(), '', CreateGLAccount.PurchRetailDom(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendFor(), NoVatPostingGroup(), '', CreateGLAccount.PurchRawMaterialsExport(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendFor(), CreatePostingGroups.RetailPostingGroup(), '', CreateGLAccount.PurchRetailExport(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(VendFor(), CreatePostingGroups.ServicesPostingGroup(), '', CreateGLAccount.PurchRetailExport(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(VendFor(), CreatePostingGroups.MiscPostingGroup(), '', CreateGLAccount.PurchRetailExport(), CreateGLAccount.InventoryAdjmtRetail(), CreateGLAccount.InventoryAdjmtRetail(), '', '', CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscountGranted(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.CostofRetailSold(), CreateGLAccount.CostofResaleSoldInterim(), CreateGLAccount.InvAdjmtInterimRetail());
         ContosoGenPostingSetup.SetOverwriteData(false);
     end;
 
@@ -101,11 +98,6 @@ codeunit 10708 "Create Posting Groups NO"
     var
         NoVatTok: Label 'NO VAT', Locked = true, MaxLength = 20;
         NoVatDescriptionLbl: Label 'Miscellaneous without VAT', MaxLength = 100;
-        FreightDescriptionLbl: Label 'Freight, etc.', MaxLength = 100;
-        MiscDescriptionLbl: Label 'Miscellaneous with VAT', MaxLength = 100;
-        RawMatDescriptionLbl: Label 'Raw Materials', MaxLength = 100;
-        RetailDescriptionLbl: Label 'Retail', MaxLength = 100;
-        ServicesDescriptionLbl: Label 'Resources, etc.', MaxLength = 100;
         CustDomTok: Label 'CUSTDOM', MaxLength = 20;
         CustDomDesLbl: Label 'Domestic customers', MaxLength = 100;
         CustForTok: Label 'CUSTFOR', MaxLength = 20;

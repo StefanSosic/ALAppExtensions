@@ -5,14 +5,14 @@
 
 namespace Microsoft.DemoData.Localization;
 
-using Microsoft.DemoData.Foundation;
-using Microsoft.DemoData.Inventory;
 using Microsoft.DemoData.Bank;
-using Microsoft.DemoData.Purchases;
 using Microsoft.DemoData.Finance;
 using Microsoft.DemoData.FixedAsset;
-using Microsoft.DemoData.Sales;
+using Microsoft.DemoData.Foundation;
 using Microsoft.DemoData.HumanResources;
+using Microsoft.DemoData.Inventory;
+using Microsoft.DemoData.Purchases;
+using Microsoft.DemoData.Sales;
 using Microsoft.DemoTool;
 
 codeunit 11214 "SE Contoso Localization"
@@ -36,7 +36,7 @@ codeunit 11214 "SE Contoso Localization"
         if Module = Enum::"Contoso Demo Data Module"::Inventory then
             InventoryModule(ContosoDemoDataLevel);
 
-        UnBindSubscriptionDemoData(Module);
+        UnBindSubscriptionDemoData(ContosoDemoDataLevel, Module);
     end;
 
     local procedure FoundationModule(ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
@@ -48,8 +48,6 @@ codeunit 11214 "SE Contoso Localization"
                 begin
                     Codeunit.Run(Codeunit::"Create Post Code SE");
                     CreateCompanyInformationSE.UpdateCompanyRegistrationInformation();
-                    Codeunit.Run(Codeunit::"Create Vat Posting Groups SE");
-                    Codeunit.Run(Codeunit::"Create Posting Groups SE");
                 end;
             Enum::"Contoso Demo Data Level"::"Master Data":
                 Codeunit.Run(Codeunit::"Create Company Information SE");
@@ -108,24 +106,15 @@ codeunit 11214 "SE Contoso Localization"
     end;
 
     local procedure InventoryModule(ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
-    var
-        CreateInvPostingSetupSE: Codeunit "Create Inv. Posting Setup SE";
     begin
-        case ContosoDemoDataLevel of
-            Enum::"Contoso Demo Data Level"::"Setup Data":
-                Codeunit.Run(Codeunit::"Create Inv. Posting Setup SE");
-            Enum::"Contoso Demo Data Level"::"Master Data":
-                begin
-                    CreateInvPostingSetupSE.UpdateInventoryPosting();
-                    Codeunit.Run(Codeunit::"Create Item Template SE");
-                    Codeunit.Run(Codeunit::"Create Location SE");
-                end;
-        end;
+        if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+            Codeunit.Run(Codeunit::"Create Location SE");
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Contoso Demo Tool", 'OnBeforeGeneratingDemoData', '', false, false)]
-    local procedure OnBeforeGeneratingDemoData(Module: Enum "Contoso Demo Data Module")
+    local procedure OnBeforeGeneratingDemoData(Module: Enum "Contoso Demo Data Module"; ContosoDemoDataLevel: Enum "Contoso Demo Data Level")
     var
+        FinanceModuleSetup: Record "Finance Module Setup";
         CreateLocationSE: Codeunit "Create Location SE";
         CreateItemSE: Codeunit "Create Item SE";
         CreateBankAccountSE: Codeunit "Create Bank Account SE";
@@ -142,7 +131,6 @@ codeunit 11214 "SE Contoso Localization"
         CreateCurrencyExchRateSE: Codeunit "Create Currency Ex. Rate SE";
         CreateFADepreciationBookSE: Codeunit "Create FA Depreciation Book SE";
         CreateAccScheduleSE: Codeunit "Create Acc. Schedule SE";
-        CreateItemChargeSE: Codeunit "Create Item Charge SE";
         CreateGenJournalLineSE: Codeunit "Create Gen. Journal Line SE";
         CreateVATStatementSE: Codeunit "Create VAT Statement SE";
     begin
@@ -154,9 +142,9 @@ codeunit 11214 "SE Contoso Localization"
                 end;
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
-                    BindSubscription(CreateItemSE);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        BindSubscription(CreateItemSE);
                     BindSubscription(CreateLocationSE);
-                    BindSubscription(CreateItemChargeSE);
                 end;
             Enum::"Contoso Demo Data Module"::Sales:
                 begin
@@ -174,6 +162,11 @@ codeunit 11214 "SE Contoso Localization"
                 end;
             Enum::"Contoso Demo Data Module"::Finance:
                 begin
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Setup Data" then begin
+                        FinanceModuleSetup.InitRecord();
+                        Codeunit.Run(Codeunit::"Create Vat Posting Groups SE");
+                        Codeunit.Run(Codeunit::"Create Posting Groups SE");
+                    end;
                     BindSubscription(CreateCurrencySE);
                     BindSubscription(CreateCurrencyExchRateSE);
                     BindSubscription(CreateResourceSE);
@@ -185,7 +178,7 @@ codeunit 11214 "SE Contoso Localization"
         end;
     end;
 
-    local procedure UnBindSubscriptionDemoData(Module: Enum "Contoso Demo Data Module")
+    local procedure UnBindSubscriptionDemoData(ContosoDemoDataLevel: Enum "Contoso Demo Data Level"; Module: Enum "Contoso Demo Data Module")
     var
         CreateLocationSE: Codeunit "Create Location SE";
         CreateItemSE: Codeunit "Create Item SE";
@@ -203,7 +196,6 @@ codeunit 11214 "SE Contoso Localization"
         CreateCurrencyExchRateSE: Codeunit "Create Currency Ex. Rate SE";
         CreateFADepreciationBookSE: Codeunit "Create FA Depreciation Book SE";
         CreateAccScheduleSE: Codeunit "Create Acc. Schedule SE";
-        CreateItemChargeSE: Codeunit "Create Item Charge SE";
         CreateGenJournalLineSE: Codeunit "Create Gen. Journal Line SE";
         CreateVATStatementSE: Codeunit "Create VAT Statement SE";
     begin
@@ -215,9 +207,9 @@ codeunit 11214 "SE Contoso Localization"
                 end;
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
-                    UnBindSubscription(CreateItemSE);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        UnBindSubscription(CreateItemSE);
                     UnBindSubscription(CreateLocationSE);
-                    UnbindSubscription(CreateItemChargeSE);
                 end;
             Enum::"Contoso Demo Data Module"::Sales:
                 begin

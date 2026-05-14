@@ -5,15 +5,15 @@
 
 namespace Microsoft.DemoData.Localization;
 
-using Microsoft.DemoTool;
-using Microsoft.DemoData.Finance;
 using Microsoft.DemoData.Bank;
+using Microsoft.DemoData.CRM;
+using Microsoft.DemoData.Finance;
+using Microsoft.DemoData.Foundation;
 using Microsoft.DemoData.HumanResources;
 using Microsoft.DemoData.Inventory;
 using Microsoft.DemoData.Purchases;
-using Microsoft.DemoData.CRM;
-using Microsoft.DemoData.Foundation;
 using Microsoft.DemoData.Sales;
+using Microsoft.DemoTool;
 
 codeunit 17142 "NZ Contoso Localization"
 {
@@ -51,10 +51,7 @@ codeunit 17142 "NZ Contoso Localization"
     begin
         case ContosoDemoDataLevel of
             Enum::"Contoso Demo Data Level"::"Master Data":
-                begin
-                    Codeunit.Run(Codeunit::"Create NZ Item Template");
-                    Codeunit.Run(Codeunit::"Create NZ Location");
-                end;
+                Codeunit.Run(Codeunit::"Create NZ Location");
         end;
     end;
 
@@ -67,8 +64,6 @@ codeunit 17142 "NZ Contoso Localization"
                     Codeunit.Run(Codeunit::"Create NZ County");
                     Codeunit.Run(Codeunit::"Create NZ Post Code");
                     Codeunit.Run(Codeunit::"Create NZ Shipping Agent");
-                    Codeunit.Run(Codeunit::"Create NZ VAT Posting Group");
-                    Codeunit.Run(Codeunit::"Create NZ Posting Groups");
                 end;
             Enum::"Contoso Demo Data Level"::"Master Data":
                 Codeunit.Run(Codeunit::"Create NZ Company Information");
@@ -116,16 +111,14 @@ codeunit 17142 "NZ Contoso Localization"
                     Codeunit.Run(Codeunit::"Create NZ Gen. Journ. Template");
                 end;
             Enum::"Contoso Demo Data Level"::"Master Data":
-                begin
-                    Codeunit.Run(Codeunit::"Create NZ Currency Ex. Rate");
-                    Codeunit.Run(Codeunit::"Create Allocation Account NZ");
-                end;
+                Codeunit.Run(Codeunit::"Create NZ Currency Ex. Rate");
         end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Contoso Demo Tool", 'OnBeforeGeneratingDemoData', '', false, false)]
     local procedure OnBeforeGeneratingDemoData(ContosoDemoDataLevel: Enum "Contoso Demo Data Level"; Module: Enum "Contoso Demo Data Module")
     var
+        FinanceModuleSetup: Record "Finance Module Setup";
         CreateNZBankAccount: Codeunit "Create NZ Bank Account";
         CreateNZVendor: Codeunit "Create NZ Vendor";
         CreateNZCustomer: Codeunit "Create NZ Customer";
@@ -137,7 +130,6 @@ codeunit 17142 "NZ Contoso Localization"
         CreateNZPaymentTerms: Codeunit "Create NZ Payment Terms";
         CreateNZShippingAgent: Codeunit "Create NZ Shipping Agent";
         CreateNZItem: Codeunit "Create NZ Item";
-        CreateNZItemCharge: Codeunit "Create NZ Item Charge";
         CreateNZLocation: Codeunit "Create NZ Location";
         CreateNZShipToAddress: Codeunit "Create NZ Ship-To Address";
         CreateNZResource: Codeunit "Create NZ Resource";
@@ -158,6 +150,11 @@ codeunit 17142 "NZ Contoso Localization"
                 end;
             Enum::"Contoso Demo Data Module"::Finance:
                 begin
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Setup Data" then begin
+                        FinanceModuleSetup.InitRecord();
+                        Codeunit.Run(Codeunit::"Create NZ VAT Posting Group");
+                        Codeunit.Run(Codeunit::"Create NZ Posting Groups");
+                    end;
                     BindSubscription(CreateNZResource);
                     BindSubscription(CreateNZPostingGroups);
                     BindSubscription(CreateNZVATPostingGroup);
@@ -170,8 +167,8 @@ codeunit 17142 "NZ Contoso Localization"
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
                     BindSubscription(CreateNZLocation);
-                    BindSubscription(CreateNZItem);
-                    BindSubscription(CreateNZItemCharge);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        BindSubscription(CreateNZItem);
                 end;
             Enum::"Contoso Demo Data Module"::Bank:
                 BindSubscription(CreateNZBankAccount);
@@ -205,7 +202,6 @@ codeunit 17142 "NZ Contoso Localization"
         CreateNZCountryRegion: Codeunit "Create NZ Country Region";
         CreateNZPaymentTerms: Codeunit "Create NZ Payment Terms";
         CreateNZShippingAgent: Codeunit "Create NZ Shipping Agent";
-        CreateNZItemCharge: Codeunit "Create NZ Item Charge";
         CreateNZItem: Codeunit "Create NZ Item";
         CreateNZLocation: Codeunit "Create NZ Location";
         CreateNZShipToAddress: Codeunit "Create NZ Ship-To Address";
@@ -229,8 +225,8 @@ codeunit 17142 "NZ Contoso Localization"
                 UnbindSubscription(CreateNZBankAccount);
             Enum::"Contoso Demo Data Module"::Inventory:
                 begin
-                    UnbindSubscription(CreateNZItem);
-                    UnbindSubscription(CreateNZItemCharge);
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        UnbindSubscription(CreateNZItem);
                     UnbindSubscription(CreateNZLocation);
                 end;
             Enum::"Contoso Demo Data Module"::Purchase:

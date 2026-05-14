@@ -31,7 +31,6 @@ table 31272 "Compensation Header CZC"
         field(5; "No."; Code[20])
         {
             Caption = 'No.';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
 
             trigger OnValidate()
@@ -49,7 +48,6 @@ table 31272 "Compensation Header CZC"
         field(10; Description; Text[100])
         {
             Caption = 'Description';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(13; "Company Type"; Enum "Compensation Company Type CZC")
@@ -270,6 +268,8 @@ table 31272 "Compensation Header CZC"
         }
         field(90; "Balance (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Compensation Line CZC"."Ledg. Entry Rem. Amt. (LCY)" where("Compensation No." = field("No.")));
             Caption = 'Balance (LCY)';
             Editable = false;
@@ -277,6 +277,8 @@ table 31272 "Compensation Header CZC"
         }
         field(95; "Compensation Balance (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Compensation Line CZC"."Amount (LCY)" where("Compensation No." = field("No.")));
             Caption = 'Compensation Balance (LCY)';
             Editable = false;
@@ -284,6 +286,8 @@ table 31272 "Compensation Header CZC"
         }
         field(96; "Compensation Value (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Compensation Line CZC"."Amount (LCY)" where("Compensation No." = field("No."), "Amount (LCY)" = filter(> 0)));
             Caption = 'Compensation Value (LCY)';
             Editable = false;
@@ -338,14 +342,14 @@ table 31272 "Compensation Header CZC"
         CompensationsSetupCZC.Get();
         if "No." = '' then begin
             CompensationsSetupCZC.TestField("Compensation Nos.");
-                "No. Series" := CompensationsSetupCZC."Compensation Nos.";
-                if NoSeries.AreRelated("No. Series", xRec."No. Series") then
-                    "No. Series" := xRec."No. Series";
+            "No. Series" := CompensationsSetupCZC."Compensation Nos.";
+            if NoSeries.AreRelated("No. Series", xRec."No. Series") then
+                "No. Series" := xRec."No. Series";
+            "No." := NoSeries.GetNextNo("No. Series");
+            CompensationHeader.ReadIsolation(ReadIsolation::ReadUncommitted);
+            CompensationHeader.SetLoadFields("No.");
+            while CompensationHeader.Get("No.") do
                 "No." := NoSeries.GetNextNo("No. Series");
-                CompensationHeader.ReadIsolation(ReadIsolation::ReadUncommitted);
-                CompensationHeader.SetLoadFields("No.");
-                while CompensationHeader.Get("No.") do
-                    "No." := NoSeries.GetNextNo("No. Series");
         end;
         "User ID" := CopyStr(UserId(), 1, MaxStrLen("User ID"));
     end;

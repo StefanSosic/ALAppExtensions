@@ -24,6 +24,42 @@ pageextension 6215 "Sust. Purch. Cr. Memo Subform" extends "Purch. Cr. Memo Subf
         }
         addafter("Qty. Assigned")
         {
+            field("Unit for Sust. Formulas"; Rec."Unit for Sust. Formulas")
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the unit of measure used for formulas to calculate total emissions based on inbound information.';
+            }
+            field("Fuel/Electricity"; Rec."Fuel/Electricity")
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the fuel or electricity of the line.';
+            }
+            field(Distance; Rec.Distance)
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the distance of the line.';
+            }
+            field("Custom Amount"; Rec."Custom Amount")
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the custom amount of the line.';
+            }
+            field("Installation Multiplier"; Rec."Installation Multiplier")
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the installation multiplier of the line.';
+            }
+            field("Time Factor"; Rec."Time Factor")
+            {
+                Visible = SustainabilityFormulasFieldVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the time factor of the line.';
+            }
             field("Renewable Energy"; Rec."Renewable Energy")
             {
                 Visible = SustainabilityVisible;
@@ -54,6 +90,30 @@ pageextension 6215 "Sust. Purch. Cr. Memo Subform" extends "Purch. Cr. Memo Subf
                 ApplicationArea = Basic, Suite;
                 ToolTip = 'Specifies the value of the Energy Consumption field.';
             }
+            field("Source of Emission Data"; Rec."Source of Emission Data")
+            {
+                Visible = SustainabilityVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the value of the Source of Emission Data field.';
+            }
+            field("Emission Verified"; Rec."Emission Verified")
+            {
+                Visible = SustainabilityVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the value of the Emission Verified field.';
+            }
+            field("CBAM Compliance"; Rec."CBAM Compliance")
+            {
+                Visible = SustainabilityVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the value of the CBAM Compliance field.';
+            }
+            field("Total Emission Cost"; Rec."Total Emission Cost")
+            {
+                Visible = false and SustainabilityVisible;
+                ApplicationArea = Basic, Suite;
+                ToolTip = 'Specifies the value of the Total Emission Cost field.';
+            }
         }
     }
 
@@ -66,11 +126,13 @@ pageextension 6215 "Sust. Purch. Cr. Memo Subform" extends "Purch. Cr. Memo Subf
     var
         SustainabilitySetup: Record "Sustainability Setup";
     begin
-        SustainabilitySetup.Get();
+        SustainabilitySetup.GetRecordOnce();
 
         SustainabilityVisible := SustainabilitySetup."Use Emissions In Purch. Doc.";
+        SustainabilityFormulasFieldVisible := SustainabilitySetup."Use Formulas In Purch. Docs";
     end;
 
     var
         SustainabilityVisible: Boolean;
+        SustainabilityFormulasFieldVisible: Boolean;
 }

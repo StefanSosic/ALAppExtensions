@@ -5,15 +5,16 @@
 
 namespace Microsoft.DemoData.Localization;
 
-using Microsoft.DemoTool;
 using Microsoft.DemoData.eServices;
-using Microsoft.DemoData.Foundation;
-using Microsoft.DemoData.Purchases;
-using Microsoft.DemoData.Sales;
 using Microsoft.DemoData.Finance;
+using Microsoft.DemoData.FixedAsset;
+using Microsoft.DemoData.Foundation;
 using Microsoft.DemoData.HumanResources;
 using Microsoft.DemoData.Inventory;
-using Microsoft.DemoData.FixedAsset;
+using Microsoft.DemoData.Purchases;
+using Microsoft.DemoData.Sales;
+using Microsoft.DemoTool;
+
 codeunit 11487 "GB Contoso Localization"
 {
     InherentEntitlements = X;
@@ -92,14 +93,15 @@ codeunit 11487 "GB Contoso Localization"
                     CreateGBGenPostingSetup.UpdateGenPostingSetup();
                     CreateGBVATPostingGroup.UpdateVATPostingSetup();
                     Codeunit.Run(Codeunit::"Create GB Column Layout Name");
+#if not CLEAN27
                     Codeunit.Run(Codeunit::"Create GB VAT Report Setup");
+#endif
                     Codeunit.Run(Codeunit::"Create GB VAT Statement");
                     Codeunit.Run(Codeunit::"Create GB Gen. Journal Batch");
                 end;
             Enum::"Contoso Demo Data Level"::"Master Data":
                 begin
                     Codeunit.Run(Codeunit::"Create GB Column Layout");
-                    Codeunit.Run(Codeunit::"Create Allocation Account GB");
                     CreateGBGeneralLedgerSetup.UpdateMaxVATDifferenceAllowedOnGeneralLedgerSetup();
                 end;
         end;
@@ -125,7 +127,9 @@ codeunit 11487 "GB Contoso Localization"
         CreateGBVendorPostingGroup: Codeunit "Create GB Vendor Posting Group";
         CreateGBCustPostingGroup: Codeunit "Create GB Cust Posting Group";
         CreateGBCustomer: Codeunit "Create GB Customer";
+#if not CLEAN27
         CreateGBVATReportSetup: Codeunit "Create GB VAT Report Setup";
+#endif
         CreateGBSalesDimensionValue: Codeunit "Create GB Sales DimensionValue";
         CreateGBFAPostingGroup: Codeunit "Create GB FA Posting Group";
         CreateGBResource: Codeunit "Create GB Resource";
@@ -161,8 +165,12 @@ codeunit 11487 "GB Contoso Localization"
                 end;
             Enum::"Contoso Demo Data Module"::Finance:
                 begin
+                    if ContosoDemoDataLevel = Enum::"Contoso Demo Data Level"::"Master Data" then
+                        Codeunit.Run(Codeunit::"Create Allocation Account GB");
                     BindSubscription(CreateGBResource);
+#if not CLEAN27
                     BindSubscription(CreateGBVATReportSetup);
+#endif
                     BindSubscription(CreateGBAnalysisViews);
                     BindSubscription(CreateGBVATPostingGroup);
                     BindSubscription(CreateGBAccScheduleLine);
@@ -185,7 +193,9 @@ codeunit 11487 "GB Contoso Localization"
         CreateGBVendorPostingGroup: Codeunit "Create GB Vendor Posting Group";
         CreateGBCustPostingGroup: Codeunit "Create GB Cust Posting Group";
         CreateGBCustomer: Codeunit "Create GB Customer";
+#if not CLEAN27
         CreateGBVATReportSetup: Codeunit "Create GB VAT Report Setup";
+#endif
         CreateGBSalesDimensionValue: Codeunit "Create GB Sales DimensionValue";
         CreateGBFAPostingGroup: Codeunit "Create GB FA Posting Group";
         CreateGBResource: Codeunit "Create GB Resource";
@@ -223,7 +233,9 @@ codeunit 11487 "GB Contoso Localization"
                 begin
                     UnbindSubscription(CreateGBResource);
                     UnbindSubscription(CreateGBAnalysisViews);
+#if not CLEAN27
                     UnbindSubscription(CreateGBVATReportSetup);
+#endif
                     UnbindSubscription(CreateGBVATPostingGroup);
                     UnbindSubscription(CreateGBVATSetupPostGrp);
                     UnbindSubscription(CreateGBVATStatement);

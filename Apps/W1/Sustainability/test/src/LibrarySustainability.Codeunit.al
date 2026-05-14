@@ -2,22 +2,29 @@ namespace Microsoft.Test.Sustainability;
 
 using Microsoft.Integration.D365Sales;
 using Microsoft.Integration.Dataverse;
+using Microsoft.Inventory.Item;
+using Microsoft.Inventory.Journal;
 using Microsoft.Inventory.Location;
+using Microsoft.Inventory.Tracking;
 using Microsoft.Sustainability.Account;
+using Microsoft.Sustainability.CBAM;
+using Microsoft.Sustainability.Certificate;
 using Microsoft.Sustainability.CRM;
 using Microsoft.Sustainability.Emission;
-using Microsoft.Sustainability.Journal;
-using Microsoft.Sustainability.Scorecard;
-using Microsoft.Sustainability.Certificate;
-using Microsoft.Sustainability.Setup;
 using Microsoft.Sustainability.Energy;
-using Microsoft.Sustainability.Ledger;
 using Microsoft.Sustainability.ESGReporting;
+using Microsoft.Sustainability.ExciseTax;
+using Microsoft.Sustainability.Journal;
+using Microsoft.Sustainability.Ledger;
+using Microsoft.Sustainability.Scorecard;
+using Microsoft.Sustainability.Setup;
 
 codeunit 148182 "Library - Sustainability"
 {
     var
         LibraryUtility: Codeunit "Library - Utility";
+        LibraryInventory: Codeunit "Library - Inventory";
+        LibraryItemTracking: Codeunit "Library - Item Tracking";
         LibraryERM: Codeunit "Library - ERM";
 
     procedure InsertAccountCategory(Code: Code[20]; Description: Text[100]; Scope: Enum "Emission Scope"; CalcFoundation: Enum "Calculation Foundation"; CO2: Boolean; CH4: Boolean; N2O: Boolean; CustomValue: Text[100]; CalcFromGL: Boolean): Record "Sustain. Account Category"
@@ -231,7 +238,9 @@ codeunit 148182 "Library - Sustainability"
         ESGReportingLines.Validate("Value Settings", ValueSettings);
         ESGReportingLines.Validate("Account Filter", AccountFilter);
         ESGReportingLines.Validate("Row Type", RowType);
-        ESGReportingLines.Validate("Row Totaling", RowTotaling);
+        if RowTotaling <> '' then
+            ESGReportingLines.Validate("Row Totaling", RowTotaling);
+
         ESGReportingLines.Validate("Calculate With", CalculateWith);
         ESGReportingLines.Validate(Show, Show);
         ESGReportingLines.Validate("Show With", ShowWith);
@@ -247,12 +256,31 @@ codeunit 148182 "Library - Sustainability"
         SustainabilitySetup.Modify();
     end;
 
+    procedure UpdateESGStandardReportingNoInSustainabilitySetup()
+    var
+        SustainabilitySetup: Record "Sustainability Setup";
+    begin
+        SustainabilitySetup.Get();
+        SustainabilitySetup.Validate("ESG Standard Reporting Nos.", LibraryERM.CreateNoSeriesCode());
+        SustainabilitySetup.Modify();
+    end;
+
     procedure UpdateDataverseIntegrationInSustainabilitySetup(DataverseIntegration: Boolean)
     var
         SustainabilitySetup: Record "Sustainability Setup";
     begin
         SustainabilitySetup.Get();
         SustainabilitySetup.Validate("Is Dataverse Int. Enabled", DataverseIntegration);
+        SustainabilitySetup.Modify();
+    end;
+
+    procedure EnableFormulaInPurchDocsInSustainabilitySetup()
+    var
+        SustainabilitySetup: Record "Sustainability Setup";
+    begin
+        SustainabilitySetup.Get();
+        SustainabilitySetup.Validate("Use Emissions In Purch. Doc.", true);
+        SustainabilitySetup.Validate("Use Formulas In Purch. Docs", true);
         SustainabilitySetup.Modify();
     end;
 
@@ -411,6 +439,18 @@ codeunit 148182 "Library - Sustainability"
         exit(CRMSystemUser.FindFirst());
     end;
 
+    procedure CreateCarbonPricing(var CarbonPricing: Record "Sustainability Carbon Pricing"; CountryRegion: Code[10]; StartingDate: Date; EndingDate: Date; UOM: Code[10]; ThresholdQty: Decimal; CarbonPrice: Decimal)
+    begin
+        CarbonPricing.Init();
+        CarbonPricing.Validate("Country/Region of Origin", CountryRegion);
+        CarbonPricing.Validate("Starting Date", StartingDate);
+        CarbonPricing.Validate("Ending Date", EndingDate);
+        CarbonPricing.Validate("Unit of Measure Code", UOM);
+        CarbonPricing.Validate("Threshold Quantity", ThresholdQty);
+        CarbonPricing.Validate("Carbon Price", CarbonPrice);
+        CarbonPricing.Insert();
+    end;
+
     procedure CleanUpBeforeTesting()
     var
         SustainabilityJnlTemplate: Record "Sustainability Jnl. Template";
@@ -431,6 +471,11 @@ codeunit 148182 "Library - Sustainability"
         ESGReportingLine: Record "Sust. ESG Reporting Line";
         PostedESGReportingHeader: Record "Sust. Posted ESG Report Header";
         PostedESGReportingLine: Record "Sust. Posted ESG Report Line";
+        SustainabilityExciseJnlTemplate: Record "Sust. Excise Journal Template";
+        SustainabilityExciseJnlBatch: Record "Sust. Excise Journal Batch";
+        SustainabilityExciseJnlLine: Record "Sust. Excise Jnl. Line";
+        SustExciseTransactionLog: Record "Sust. Excise Taxes Trans. Log";
+        SustainabilityDisclaimer: Record "Sustainability Disclaimer";
     begin
         SustainabilityJnlTemplate.DeleteAll();
         SustainabilityJnlBatch.DeleteAll();
@@ -450,5 +495,44 @@ codeunit 148182 "Library - Sustainability"
         ESGReportingLine.DeleteAll();
         PostedESGReportingHeader.DeleteAll();
         PostedESGReportingLine.DeleteAll();
+        SustainabilityExciseJnlTemplate.DeleteAll();
+        SustainabilityExciseJnlBatch.DeleteAll();
+        SustainabilityExciseJnlLine.DeleteAll();
+        SustExciseTransactionLog.DeleteAll();
+        SustainabilityDisclaimer.DeleteAll();
+    end;
+
+    procedure CreateItemWithSpecificCarbonTrackingMethod(var Item: Record Item)
+    begin
+        LibraryInventory.CreateItem(Item);
+        Item.Validate("Carbon Tracking Method", Item."Carbon Tracking Method"::Specific);
+        Item.Modify();
+    end;
+
+    procedure UpdateCarbonTrackingMethod(var Item: Record Item; CarbonTrackingMethod: Enum "Sust. Carbon Tracking Method")
+    begin
+        if Item."No." = '' then
+            LibraryInventory.CreateItem(Item);
+
+        Item.Validate("Carbon Tracking Method", CarbonTrackingMethod);
+        Item.Modify();
+    end;
+
+    procedure PostPositiveAdjustmentWithItemTracking(Item: Record Item; LocationCode: Code[10]; AccountCode: Code[20]; VariantCode: Code[10];
+        Qty: Decimal; PostingDate: Date; SerialNo: Code[50]; LotNo: Code[50]; TotalCo2e: Decimal)
+    var
+        ReservationEntry: Record "Reservation Entry";
+        ItemJournalTemplate: Record "Item Journal Template";
+        ItemJournalLine: Record "Item Journal Line";
+        ItemJournalBatch: Record "Item Journal Batch";
+    begin
+        LibraryInventory.CreateItemJournalBatchByType(ItemJournalBatch, ItemJournalTemplate.Type::Item);
+        LibraryInventory.CreateItemJournalLine(ItemJournalLine, ItemJournalBatch, Item, LocationCode, VariantCode, PostingDate,
+          ItemJournalLine."Entry Type"::"Positive Adjmt.", Qty, 0);
+        ItemJournalLine.Validate("Sust. Account No.", AccountCode);
+        ItemJournalLine.Validate("Total CO2e", TotalCo2e);
+        ItemJournalLine.Modify();
+        LibraryItemTracking.CreateItemJournalLineItemTracking(ReservationEntry, ItemJournalLine, SerialNo, LotNo, Qty);
+        LibraryInventory.PostItemJournalBatch(ItemJournalBatch);
     end;
 }

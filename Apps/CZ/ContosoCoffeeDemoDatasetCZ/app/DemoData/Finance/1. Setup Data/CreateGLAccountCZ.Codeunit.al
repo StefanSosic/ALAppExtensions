@@ -5,8 +5,8 @@
 
 namespace Microsoft.DemoData.Finance;
 
-using Microsoft.Finance.GeneralLedger.Account;
 using Microsoft.DemoTool.Helpers;
+using Microsoft.Finance.GeneralLedger.Account;
 using Microsoft.Foundation.Enums;
 
 codeunit 31182 "Create G/L Account CZ"
@@ -49,7 +49,7 @@ codeunit 31182 "Create G/L Account CZ"
         SubCategory := Format(GLAccountCategoryMgtCZL.GetBI1IntangibleResultsofResearchandDevelopment(), 80);
         ContosoGLAccount.InsertGLAccount(Intangibleresultsofresearchanddevelopment(), IntangibleresultsofresearchanddevelopmentName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::Assets, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
         SubCategory := Format(GLAccountCategoryMgtCZL.GetBI21Software(), 80);
-        ContosoGLAccount.InsertGLAccount(CreateGLAccount.Software(), CreateGLAccount.SoftwareName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::Assets, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
+        ContosoGLAccount.InsertGLAccount(CreateGLAccount.Software(), CreateGLAccount.SoftwareName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::Assets, SubCategory, Enum::"G/L Account Type"::Posting, '', CreatePostingGroups.ServicesPostingGroup(), 0, '', Enum::"General Posting Type"::" ", '', CreateVATPostingGroupsCZ.VAT12RC(), true, false, false);
         SubCategory := Format(GLAccountCategoryMgtCZL.GetBI22OtherValuableRights(), 80);
         ContosoGLAccount.InsertGLAccount(Valuablerights(), ValuablerightsName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::Assets, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
         SubCategory := Format(GLAccountCategoryMgtCZL.GetBI3Goodwill(), 80);
@@ -702,9 +702,9 @@ codeunit 31182 "Create G/L Account CZ"
         ContosoGLAccount.InsertGLAccount(RevenuesTotal(), RevenuesTotalName(), Enum::"G/L Account Income/Balance"::"Income Statement", Enum::"G/L Account Category"::" ", SubCategory, Enum::"G/L Account Type"::"End-Total", '', '', 0, Revenues() + '..' + RevenuesTotal(), Enum::"General Posting Type"::" ", '', '', false, false, false);
         #endregion
 
-        ContosoGLAccount.InsertGLAccount(OpeningBalanceSheetAccount(), OpeningBalanceSheetAccountName(), Enum::"G/L Account Income/Balance"::"Income Statement", Enum::"G/L Account Category"::Income, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
-        ContosoGLAccount.InsertGLAccount(ClosingBalanceSheetAccount(), ClosingBalanceSheetAccountName(), Enum::"G/L Account Income/Balance"::"Income Statement", Enum::"G/L Account Category"::Income, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
-        ContosoGLAccount.InsertGLAccount(ProfitAndLossAccount(), ProfitAndLossAccountName(), Enum::"G/L Account Income/Balance"::"Income Statement", Enum::"G/L Account Category"::Income, SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
+        ContosoGLAccount.InsertGLAccount(OpeningBalanceSheetAccount(), OpeningBalanceSheetAccountName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::" ", SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
+        ContosoGLAccount.InsertGLAccount(ClosingBalanceSheetAccount(), ClosingBalanceSheetAccountName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::" ", SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
+        ContosoGLAccount.InsertGLAccount(ProfitAndLossAccount(), ProfitAndLossAccountName(), Enum::"G/L Account Income/Balance"::"Balance Sheet", Enum::"G/L Account Category"::" ", SubCategory, Enum::"G/L Account Type"::Posting, '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);
 
         #region Revenues - Sub-Balance Sheet Accounts
         ContosoGLAccount.InsertGLAccount(SubBalanceSheetAccounts(), SubBalanceSheetAccountsName(), Enum::"G/L Account Income/Balance"::"Income Statement", Enum::"G/L Account Category"::" ", SubCategory, Enum::"G/L Account Type"::"Begin-Total", '', '', 0, '', Enum::"General Posting Type"::" ", '', '', false, false, false);

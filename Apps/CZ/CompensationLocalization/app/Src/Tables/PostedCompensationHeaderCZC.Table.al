@@ -27,13 +27,11 @@ table 31274 "Posted Compensation Header CZC"
         field(5; "No."; Code[20])
         {
             Caption = 'No.';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(10; Description; Text[100])
         {
             Caption = 'Description';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(13; "Company Type"; Enum "Compensation Company Type CZC")
@@ -143,6 +141,8 @@ table 31274 "Posted Compensation Header CZC"
         }
         field(90; "Balance (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Posted Compensation Line CZC"."Ledg. Entry Rem. Amt. (LCY)" where("Compensation No." = field("No.")));
             Caption = 'Balance (LCY)';
             Editable = false;
@@ -150,6 +150,8 @@ table 31274 "Posted Compensation Header CZC"
         }
         field(95; "Compensation Balance (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Posted Compensation Line CZC"."Amount (LCY)" where("Compensation No." = field("No.")));
             Caption = 'Compensation Balance (LCY)';
             Editable = false;
@@ -157,6 +159,8 @@ table 31274 "Posted Compensation Header CZC"
         }
         field(96; "Compensation Value (LCY)"; Decimal)
         {
+            AutoFormatType = 2;
+            AutoFormatExpression = '';
             CalcFormula = sum("Posted Compensation Line CZC"."Amount (LCY)" where("Compensation No." = field("No."), "Amount (LCY)" = filter(> 0)));
             Caption = 'Compensation Value (LCY)';
             Editable = false;

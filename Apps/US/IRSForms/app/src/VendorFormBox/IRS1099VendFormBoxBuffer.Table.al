@@ -27,13 +27,14 @@ table 10044 "IRS 1099 Vend. Form Box Buffer"
         field(5; "Form Box No."; Code[20])
         {
         }
+        field(6; "Document ID"; Integer)
+        {
+        }
         field(7; "Line No"; Integer)
         {
-
         }
         field(10; "Buffer Type"; Enum "IRS 1099 Form Box Buffer Type")
         {
-
         }
         field(11; Amount; Decimal)
         {
@@ -69,6 +70,11 @@ table 10044 "IRS 1099 Vend. Form Box Buffer"
         field(17; "Vendor Ledger Entry No."; Integer)
         {
         }
+        field(18; "Calculated Amount"; Decimal)
+        {
+            AutoFormatType = 1;
+            AutoFormatExpression = Rec."Currency Code";
+        }
         field(100; "Currency Code"; Code[10])
         {
         }
@@ -84,5 +90,10 @@ table 10044 "IRS 1099 Vend. Form Box Buffer"
         {
 
         }
+        key(VendorFormBox; "Vendor No.", "Form No.", "Form Box No.")
+        {
+
+        }
+
     }
 }

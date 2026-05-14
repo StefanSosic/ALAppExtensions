@@ -1,3 +1,4 @@
+#if not CLEANSCHEMA32
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,6 +11,14 @@ table 47034 "SL SOHeader"
     Access = Internal;
     DataClassification = CustomerContent;
     ReplicateData = false;
+    ObsoleteReason = 'Replaced by table SL SOHeader Buffer.';
+#if not CLEAN29
+    ObsoleteState = Pending;
+    ObsoleteTag = '29.0';
+#else
+    ObsoleteState = Removed;
+    ObsoleteTag = '32.0';
+#endif
 
     fields
     {
@@ -72,6 +81,7 @@ table 47034 "SL SOHeader"
         field(15; BalDue; Decimal)
         {
             Caption = 'BalDue';
+            AutoFormatType = 0;
         }
         field(16; BIInvoice; Text[1])
         {
@@ -148,10 +158,12 @@ table 47034 "SL SOHeader"
         field(34; BuildQty; Decimal)
         {
             Caption = 'BuildQty';
+            AutoFormatType = 0;
         }
         field(35; BuildQtyUpdated; Decimal)
         {
             Caption = 'BuildQtyUpdated';
+            AutoFormatType = 0;
         }
         field(36; BuildSiteID; Text[10])
         {
@@ -192,6 +204,7 @@ table 47034 "SL SOHeader"
         field(45; CmmnPct; Decimal)
         {
             Caption = 'CmmnPct';
+            AutoFormatType = 0;
         }
         field(46; ConsolInv; Integer)
         {
@@ -212,6 +225,7 @@ table 47034 "SL SOHeader"
         field(50; CreditApprLimit; Decimal)
         {
             Caption = 'CreditApprLimit';
+            AutoFormatType = 0;
         }
         field(51; CreditChk; Integer)
         {
@@ -240,6 +254,7 @@ table 47034 "SL SOHeader"
         field(57; CuryBalDue; Decimal)
         {
             Caption = 'CuryBalDue';
+            AutoFormatType = 0;
         }
         field(58; CuryEffDate; DateTime)
         {
@@ -256,10 +271,12 @@ table 47034 "SL SOHeader"
         field(61; CuryPremFrtAmtAppld; Decimal)
         {
             Caption = 'CuryPremFrtAmtAppld';
+            AutoFormatType = 0;
         }
         field(62; CuryRate; Decimal)
         {
             Caption = 'CuryRate';
+            AutoFormatType = 0;
         }
         field(63; CuryRateType; Text[6])
         {
@@ -268,46 +285,57 @@ table 47034 "SL SOHeader"
         field(64; CuryTotFrt; Decimal)
         {
             Caption = 'CuryTotFrt';
+            AutoFormatType = 0;
         }
         field(65; CuryTotLineDisc; Decimal)
         {
             Caption = 'CuryTotLineDisc';
+            AutoFormatType = 0;
         }
         field(66; CuryTotMerch; Decimal)
         {
             Caption = 'CuryTotMerch';
+            AutoFormatType = 0;
         }
         field(67; CuryTotMisc; Decimal)
         {
             Caption = 'CuryTotMisc';
+            AutoFormatType = 0;
         }
         field(68; CuryTotOrd; Decimal)
         {
             Caption = 'CuryTotOrd';
+            AutoFormatType = 0;
         }
         field(69; CuryTotPmt; Decimal)
         {
             Caption = 'CuryTotPmt';
+            AutoFormatType = 0;
         }
         field(70; CuryTotPremFrt; Decimal)
         {
             Caption = 'CuryTotPremFrt';
+            AutoFormatType = 0;
         }
         field(71; CuryTotTax; Decimal)
         {
             Caption = 'CuryTotTax';
+            AutoFormatType = 0;
         }
         field(72; CuryTotTxbl; Decimal)
         {
             Caption = 'CuryTotTxbl';
+            AutoFormatType = 0;
         }
         field(73; CuryUnshippedBalance; Decimal)
         {
             Caption = 'CuryUnshippedBalance';
+            AutoFormatType = 0;
         }
         field(74; CuryWholeOrdDisc; Decimal)
         {
             Caption = 'CuryWholeOrdDisc';
+            AutoFormatType = 0;
         }
         field(75; CustGLClassID; Text[4])
         {
@@ -336,6 +364,7 @@ table 47034 "SL SOHeader"
         field(81; DiscPct; Decimal)
         {
             Caption = 'DiscPct';
+            AutoFormatType = 0;
         }
         field(82; DiscSub; Text[24])
         {
@@ -472,6 +501,7 @@ table 47034 "SL SOHeader"
         field(115; PremFrtAmtApplied; Decimal)
         {
             Caption = 'PremFrtAmtApplied';
+            AutoFormatType = 0;
         }
         field(116; Priority; Integer)
         {
@@ -492,6 +522,7 @@ table 47034 "SL SOHeader"
         field(120; ReleaseValue; Decimal)
         {
             Caption = 'ReleaseValue';
+            AutoFormatType = 0;
         }
         field(121; RequireStepAssy; Integer)
         {
@@ -516,18 +547,22 @@ table 47034 "SL SOHeader"
         field(126; S4Future03; Decimal)
         {
             Caption = 'S4Future03';
+            AutoFormatType = 0;
         }
         field(127; S4Future04; Decimal)
         {
             Caption = 'S4Future04';
+            AutoFormatType = 0;
         }
         field(128; S4Future05; Decimal)
         {
             Caption = 'S4Future05';
+            AutoFormatType = 0;
         }
         field(129; S4Future06; Decimal)
         {
             Caption = 'S4Future06';
+            AutoFormatType = 0;
         }
         field(130; S4Future07; DateTime)
         {
@@ -672,54 +707,67 @@ table 47034 "SL SOHeader"
         field(165; TotCommCost; Decimal)
         {
             Caption = 'TotCommCost';
+            AutoFormatType = 0;
         }
         field(166; TotCost; Decimal)
         {
             Caption = 'TotCost';
+            AutoFormatType = 0;
         }
         field(167; TotFrt; Decimal)
         {
             Caption = 'TotFrt';
+            AutoFormatType = 0;
         }
         field(168; TotLineDisc; Decimal)
         {
             Caption = 'TotLineDisc';
+            AutoFormatType = 0;
         }
         field(169; TotMerch; Decimal)
         {
             Caption = 'TotMerch';
+            AutoFormatType = 0;
         }
         field(170; TotMisc; Decimal)
         {
             Caption = 'TotMisc';
+            AutoFormatType = 0;
         }
         field(171; TotOrd; Decimal)
         {
             Caption = 'TotOrd';
+            AutoFormatType = 0;
         }
         field(172; TotPmt; Decimal)
         {
             Caption = 'TotPmt';
+            AutoFormatType = 0;
         }
         field(173; TotPremFrt; Decimal)
         {
             Caption = 'TotPremFrt';
+            AutoFormatType = 0;
         }
         field(174; TotShipWght; Decimal)
         {
             Caption = 'TotShipWght';
+            AutoFormatType = 0;
         }
         field(175; TotTax; Decimal)
         {
             Caption = 'TotTax';
+            AutoFormatType = 0;
         }
         field(176; TotTxbl; Decimal)
         {
             Caption = 'TotTxbl';
+            AutoFormatType = 0;
         }
         field(177; UnshippedBalance; Decimal)
         {
             Caption = 'UnshippedBalance';
+            AutoFormatType = 0;
         }
         field(178; User1; Text[30])
         {
@@ -744,10 +792,12 @@ table 47034 "SL SOHeader"
         field(183; User5; Decimal)
         {
             Caption = 'User5';
+            AutoFormatType = 0;
         }
         field(184; User6; Decimal)
         {
             Caption = 'User6';
+            AutoFormatType = 0;
         }
         field(185; User7; Text[10])
         {
@@ -772,6 +822,7 @@ table 47034 "SL SOHeader"
         field(190; WholeOrdDisc; Decimal)
         {
             Caption = 'WholeOrdDisc';
+            AutoFormatType = 0;
         }
         field(191; WorkflowID; Integer)
         {
@@ -795,3 +846,4 @@ table 47034 "SL SOHeader"
         }
     }
 }
+#endif

@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Purchases.History;
+using System.Security.User;
 
 pageextension 31144 "Posted Purch. Inv. Update CZL" extends "Posted Purch. Invoice - Update"
 {
@@ -30,6 +31,8 @@ pageextension 31144 "Posted Purch. Inv. Update CZL" extends "Posted Purch. Invoi
                 {
                     ApplicationArea = Basic, Suite;
                     ToolTip = 'Specifies the vendor''s own invoice number.';
+                    Editable = IsExtDocNoEditable;
+                    Visible = IsExtDocNoEditable;
                 }
                 field("Variable Symbol CZL"; Rec."Variable Symbol CZL")
                 {
@@ -55,4 +58,13 @@ pageextension 31144 "Posted Purch. Inv. Update CZL" extends "Posted Purch. Invoi
             }
         }
     }
+
+    trigger OnOpenPage()
+    begin
+        IsExtDocNoEditable := UserSetupAdvManagementCZL.IsExtDocNoChangingAllowed();
+    end;
+
+    var
+        UserSetupAdvManagementCZL: Codeunit "User Setup Adv. Management CZL";
+        IsExtDocNoEditable: Boolean;
 }

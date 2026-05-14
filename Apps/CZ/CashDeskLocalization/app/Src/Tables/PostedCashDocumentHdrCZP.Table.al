@@ -39,7 +39,6 @@ table 11737 "Posted Cash Document Hdr. CZP"
         field(2; "No."; Code[20])
         {
             Caption = 'No.';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(3; "Pay-to/Receive-from Name"; Text[100])
@@ -59,6 +58,8 @@ table 11737 "Posted Cash Document Hdr. CZP"
         }
         field(7; Amount; Decimal)
         {
+            AutoFormatType = 1;
+            AutoFormatExpression = Rec."Currency Code";
             CalcFormula = Sum("Posted Cash Document Line CZP".Amount where("Cash Desk No." = field("Cash Desk No."), "Cash Document No." = field("No.")));
             Caption = 'Amount';
             Editable = false;
@@ -66,6 +67,8 @@ table 11737 "Posted Cash Document Hdr. CZP"
         }
         field(8; "Amount (LCY)"; Decimal)
         {
+            AutoFormatType = 1;
+            AutoFormatExpression = '';
             CalcFormula = Sum("Posted Cash Document Line CZP"."Amount (LCY)" where("Cash Desk No." = field("Cash Desk No."), "Cash Document No." = field("No.")));
             Caption = 'Amount (LCY)';
             Editable = false;
@@ -129,6 +132,7 @@ table 11737 "Posted Cash Document Hdr. CZP"
         }
         field(25; "Currency Factor"; Decimal)
         {
+            AutoFormatType = 0;
             Caption = 'Currency Factor';
             DataClassification = CustomerContent;
         }
@@ -183,6 +187,8 @@ table 11737 "Posted Cash Document Hdr. CZP"
         }
         field(55; "VAT Base Amount (LCY)"; Decimal)
         {
+            AutoFormatType = 1;
+            AutoFormatExpression = '';
             CalcFormula = Sum("Posted Cash Document Line CZP"."VAT Base Amount (LCY)" where("Cash Desk No." = field("Cash Desk No."), "Cash Document No." = field("No.")));
             Caption = 'VAT Base Amount (LCY)';
             Editable = false;
@@ -190,6 +196,8 @@ table 11737 "Posted Cash Document Hdr. CZP"
         }
         field(56; "Amount Including VAT (LCY)"; Decimal)
         {
+            AutoFormatType = 1;
+            AutoFormatExpression = '';
             CalcFormula = Sum("Posted Cash Document Line CZP"."Amount Including VAT (LCY)" where("Cash Desk No." = field("Cash Desk No."), "Cash Document No." = field("No.")));
             Caption = 'Amount Including VAT (LCY)';
             Editable = false;
@@ -215,7 +223,6 @@ table 11737 "Posted Cash Document Hdr. CZP"
         field(65; "Payment Purpose"; Text[100])
         {
             Caption = 'Payment Purpose';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(70; "Received By"; Text[100])
@@ -236,13 +243,11 @@ table 11737 "Posted Cash Document Hdr. CZP"
         field(73; "Received From"; Text[100])
         {
             Caption = 'Received From';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(74; "Paid To"; Text[100])
         {
             Caption = 'Paid To';
-            OptimizeForTextSearch = true;
             DataClassification = CustomerContent;
         }
         field(80; "Registration No."; Text[20])

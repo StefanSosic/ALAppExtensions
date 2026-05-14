@@ -7,8 +7,8 @@ namespace Microsoft.DemoData.Finance;
 
 using Microsoft.DemoTool;
 using Microsoft.DemoTool.Helpers;
-using Microsoft.Finance.VAT.Setup;
 using Microsoft.Finance.VAT.Clause;
+using Microsoft.Finance.VAT.Setup;
 using Microsoft.Foundation.Enums;
 
 codeunit 31189 "Create Vat Posting Groups CZ"
@@ -35,6 +35,7 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         if ContosoCoffeeDemoDataSetup."Company Type" = ContosoCoffeeDemoDataSetup."Company Type"::"Sales Tax" then
             exit;
 
+        ContosoPostingSetupCZ.SetOverwriteData(true);
         ContosoPostingSetupCZ.InsertVATPostingSetup('', NOVAT(), NOVAT(), 0, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::" ");
         ContosoPostingSetupCZ.InsertVATPostingSetup('', VAT12I(), VAT12I(), 0, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::Reduced);
         ContosoPostingSetupCZ.InsertVATPostingSetup('', VAT12S(), VAT12S(), 0, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::Reduced);
@@ -57,6 +58,7 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         ContosoPostingSetupCZ.InsertVATPostingSetup(CreateVATPostingGroups.Export(), VAT12S(), VAT12S(), 12, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::Reduced);
         ContosoPostingSetupCZ.InsertVATPostingSetup(CreateVATPostingGroups.Export(), VAT21I(), VAT21I(), 0, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::Base);
         ContosoPostingSetupCZ.InsertVATPostingSetup(CreateVATPostingGroups.Export(), VAT21S(), VAT21S(), 21, Enum::"Tax Calculation Type"::"Normal VAT", '', false, "VAT Rate CZL"::Base);
+        ContosoPostingSetupCZ.SetOverwriteData(false);
     end;
 
     procedure UpdateVATPostingSetup()
@@ -100,7 +102,7 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         VATProductPostingGroup: Record "VAT Product Posting Group";
         CreateVATPostingGroups: Codeunit "Create VAT Posting Groups";
     begin
-        VATProductPostingGroup.SetFilter(Code, '%1|%2|%3|%4|%5|%6|%7|%8', CreateVATPostingGroups.FullNormal(), CreateVATPostingGroups.FullRed(), CreateVATPostingGroups.Standard(), CreateVATPostingGroups.Reduced(), CreateVATPostingGroups.ServNormal(), CreateVATPostingGroups.ServRed(), CreateVATPostingGroups.Zero(), '');
+        VATProductPostingGroup.SetFilter(Code, '%1|%2|%3|%4|%5', CreateVATPostingGroups.FullNormal(), CreateVATPostingGroups.FullRed(), CreateVATPostingGroups.ServNormal(), CreateVATPostingGroups.ServRed(), '');
         VATProductPostingGroup.DeleteAll(true);
     end;
 
@@ -109,22 +111,14 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         VATClause: Record "VAT Clause";
         CreateVATPostingGroups: Codeunit "Create VAT Posting Groups";
     begin
-        VATClause.SetFilter(Code, '%1|%2', CreateVATPostingGroups.Reduced(), CreateVATPostingGroups.Zero());
+        VATClause.SetFilter(Code, '%1', CreateVATPostingGroups.Reduced());
         VATClause.DeleteAll(true);
-    end;
-
-    internal procedure CreateDummyVATProductPostingGroup()
-    var
-        CreateVATPostingGroups: Codeunit "Create VAT Posting Groups";
-        ContosoPostingGroup: Codeunit "Contoso Posting Group";
-    begin
-        ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.Reduced(), ''); // Reduced is used in Resources in Finance module
-        ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.Standard(), ''); // Standard is used in VAT Posting Setup in Common module
     end;
 
     local procedure InsertVATProductPostingGroup()
     var
         ContosoCoffeeDemoDataSetup: Record "Contoso Coffee Demo Data Setup";
+        FinanceModuleSetup: Record "Finance Module Setup";
         ContosoPostingGroup: Codeunit "Contoso Posting Group";
     begin
         ContosoCoffeeDemoDataSetup.Get();
@@ -139,6 +133,16 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         ContosoPostingGroup.InsertVATProductPostingGroup(VAT21I(), VAT21itemLbl);
         ContosoPostingGroup.InsertVATProductPostingGroup(VAT21RC(), VAT21reversechargeLbl);
         ContosoPostingGroup.InsertVATProductPostingGroup(VAT21S(), VAT21serviceLbl);
+
+        FinanceModuleSetup.Get();
+
+        if FinanceModuleSetup."VAT Prod. Post Grp. Standard" = '' then
+            FinanceModuleSetup.Validate("VAT Prod. Post Grp. Standard", VAT21I());
+
+        if FinanceModuleSetup."VAT Prod. Post Grp. Reduced" = '' then
+            FinanceModuleSetup.Validate("VAT Prod. Post Grp. Reduced", VAT21S());
+
+        FinanceModuleSetup.Modify();
     end;
 
     local procedure InsertVATClause()
@@ -164,9 +168,7 @@ codeunit 31189 "Create Vat Posting Groups CZ"
     begin
         if Rec."VAT Prod. Posting Group" in
             [CreateVATPostingGroups.FullNormal(), CreateVATPostingGroups.FullRed(),
-             CreateVATPostingGroups.Standard(), CreateVATPostingGroups.Reduced(),
-             CreateVATPostingGroups.ServNormal(), CreateVATPostingGroups.ServRed(),
-             CreateVATPostingGroups.Zero(), '']
+             CreateVATPostingGroups.ServNormal(), CreateVATPostingGroups.ServRed(), '']
         then
             Rec.Delete(true);
     end;
@@ -177,8 +179,10 @@ codeunit 31189 "Create Vat Posting Groups CZ"
     end;
 
     procedure NOVAT(): Code[20]
+    var
+        CreateVATPostingGroups: Codeunit "Create VAT Posting Groups";
     begin
-        exit(NOVATLbl);
+        exit(CreateVATPostingGroups.NoVAT());
     end;
 
     procedure RC12(): Code[20]
@@ -227,7 +231,6 @@ codeunit 31189 "Create Vat Posting Groups CZ"
         ReverseChargeVATClauseDescriptionLbl: Label 'According to §92a of Act No. 235/2004 Coll. on VAT, it is a transfer of tax liability, where the amount of tax is REQUIRED to be ADDED AND ADMITTED', MaxLength = 250;
         ReverseChargeVATClauseDescription2Lbl: Label 'the taxpayer for whom the transaction was carried out. The VAT rate is %1% and the customer pays the tax.', MaxLength = 250, Comment = '%1 = vat rate';
         MiscellaneousWithoutVATLbl: Label 'Miscellaneous without VAT', MaxLength = 100;
-        NOVATLbl: Label 'NO VAT', MaxLength = 20;
         RC12Lbl: Label 'RC12', MaxLength = 20;
         RC21Lbl: Label 'RC21', MaxLength = 20;
         VAT12RCLbl: Label 'VAT12RC', MaxLength = 20;

@@ -8,10 +8,6 @@ pageextension 31016 "Vendor Ledger Entries CZL" extends "Vendor Ledger Entries"
 {
     layout
     {
-        modify("External Document No.")
-        {
-            Editable = true;
-        }
         addafter("Message to Recipient")
         {
             field("Vendor Posting Group CZL"; Rec."Vendor Posting Group")
@@ -79,6 +75,8 @@ pageextension 31016 "Vendor Ledger Entries CZL" extends "Vendor Ledger Entries"
         {
             field(SuggestedAmountToApplyCZL; Rec.CalcSuggestedAmountToApplyCZL())
             {
+                AutoFormatType = 1;
+                AutoFormatExpression = '';
                 Caption = 'Suggested Amount to Apply (LCY)';
                 ApplicationArea = Basic, Suite;
                 Editable = false;

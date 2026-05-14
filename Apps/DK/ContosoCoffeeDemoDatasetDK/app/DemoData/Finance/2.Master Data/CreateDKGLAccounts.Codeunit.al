@@ -5,14 +5,14 @@
 
 namespace Microsoft.DemoData.Finance;
 
-using Microsoft.Inventory.Setup;
-using Microsoft.DemoTool.Helpers;
 using Microsoft.DemoData.Common;
-using Microsoft.DemoData.Service;
-using Microsoft.DemoData.Manufacturing;
 using Microsoft.DemoData.FixedAsset;
 using Microsoft.DemoData.HumanResources;
 using Microsoft.DemoData.Jobs;
+using Microsoft.DemoData.Manufacturing;
+using Microsoft.DemoData.Service;
+using Microsoft.DemoTool.Helpers;
+using Microsoft.Inventory.Setup;
 
 codeunit 13699 "Create DK GL Accounts"
 {
@@ -32,13 +32,13 @@ codeunit 13699 "Create DK GL Accounts"
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.VendorDomesticName(), '25100');
 
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.SalesDomesticName(), '01030');
-        ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.PurchaseDomesticName(), '02100');
+        ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.PurchaseDomesticName(), '02020');
 
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.SalesVATStandardName(), '24010');
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.PurchaseVATStandardName(), '24020');
 
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.DirectCostAppliedRawMatName(), '02020');
-        ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.DirectCostAppliedRetailName(), '16200');
+        ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.DirectCostAppliedRetailName(), '02020');
 
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.OverheadAppliedRawMatName(), '02020');
         ContosoGLAccount.AddAccountForLocalization(CommonGLAccount.OverheadAppliedRetailName(), '02020');
@@ -75,15 +75,16 @@ codeunit 13699 "Create DK GL Accounts"
         ContosoGLAccount: Codeunit "Contoso GL Account";
         MfgGLAccount: Codeunit "Create Mfg GL Account";
     begin
-        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.DirectCostAppliedCapName(), '02100');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.DirectCostAppliedCapName(), '02020');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.OverheadAppliedCapName(), '02100');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.PurchaseVarianceCapName(), '02410');
 
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MaterialVarianceName(), '02420');
-        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.CapacityVarianceName(), '02421');
-        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.SubcontractedVarianceName(), '02422');
-        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.CapOverheadVarianceName(), '02423');
-        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MfgOverheadVarianceName(), '02424');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.CapacityVarianceName(), '02422');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.SubcontractedVarianceName(), '02423');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.CapOverheadVarianceName(), '02424');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MfgOverheadVarianceName(), '02425');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MaterialNonInvVarianceName(), '02421');
 
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.FinishedGoodsName(), '16300');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.WIPAccountFinishedGoodsName(), '16800');

@@ -5,8 +5,8 @@
 
 namespace Microsoft.DemoData.Finance;
 
-using Microsoft.DemoTool.Helpers;
 using Microsoft.DemoData.Localization;
+using Microsoft.DemoTool.Helpers;
 
 codeunit 11538 "Create Posting Groups NL"
 {
@@ -22,15 +22,18 @@ codeunit 11538 "Create Posting Groups NL"
 
     local procedure InsertVATProductPostingGroup()
     var
+        FinanceModuleSetup: Record "Finance Module Setup";
         ContosoPostingGroup: Codeunit "Contoso Posting Group";
         CreateVATPostingGroups: Codeunit "Create VAT Posting Groups";
     begin
+        FinanceModuleSetup.Get();
+
         ContosoPostingGroup.SetOverwriteData(true);
         ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.FullNormal(), StrSubstNo(VATOnlyInvoicesDescriptionLbl, '21'));
         ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.ServNormal(), StrSubstNo(MiscellaneousVATDescriptionLbl, '21'));
-        ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.Standard(), StrSubstNo(NormalVatDescriptionLbl, '21'));
+        ContosoPostingGroup.InsertVATProductPostingGroup(FinanceModuleSetup."VAT Prod. Post Grp. Standard", StrSubstNo(NormalVatDescriptionLbl, '21'));
         ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.FullRed(), StrSubstNo(VATOnlyInvoicesDescriptionLbl, '9'));
-        ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.Reduced(), StrSubstNo(ReducedVatDescriptionLbl, '9'));
+        ContosoPostingGroup.InsertVATProductPostingGroup(FinanceModuleSetup."VAT Prod. Post Grp. Reduced", StrSubstNo(ReducedVatDescriptionLbl, '9'));
         ContosoPostingGroup.InsertVATProductPostingGroup(CreateVATPostingGroups.ServRed(), StrSubstNo(MiscellaneousVATDescriptionLbl, '9'));
         ContosoPostingGroup.SetOverwriteData(false);
     end;
@@ -51,6 +54,7 @@ codeunit 11538 "Create Posting Groups NL"
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroups.DomesticPostingGroup(), CreatePostingGroups.ZeroPostingGroup(), CreateNLGLAccounts.ResaleofGoods(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.CostofMaterials(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.GoodsforResale(), '', CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.CostofMaterials(), '', '');
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroups.EUPostingGroup(), CreatePostingGroups.RetailPostingGroup(), CreateNLGLAccounts.ResaleofGoods(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.CostofMaterials(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.GoodsforResale(), '', CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.CostofMaterials(), '', '');
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroups.EUPostingGroup(), CreatePostingGroups.ZeroPostingGroup(), CreateNLGLAccounts.ResaleofGoods(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.CostofMaterials(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.GoodsforResale(), '', CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.CostofMaterials(), '', '');
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroups.ExportPostingGroup(), CreatePostingGroups.RetailPostingGroup(), CreateNLGLAccounts.ResaleofGoods(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.CostofMaterials(), CreateNLGLAccounts.GoodsforResale(), CreateNLGLAccounts.GoodsforResale(), '', CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.CostofMaterials(), '', '');
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroups.ExportPostingGroup(), CreatePostingGroups.ServicesPostingGroup(), CreateNLGLAccounts.SalesofServiceWork(), CreateNLGLAccounts.OtherExternalServices(), CreateNLGLAccounts.CostofLabor(), CreateNLGLAccounts.OtherExternalServices(), CreateNLGLAccounts.OtherExternalServices(), '', CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.SalesDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.PurchaseDiscounts(), CreateNLGLAccounts.CostofLabor(), '', '');

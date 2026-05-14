@@ -99,11 +99,28 @@ page 6221 "Sustainability Setup"
                 {
                     ToolTip = 'Specifies the enablement of default Sustainability Account emissions on the Work Center and Machine Center cards.';
                 }
+                field("Fixed Asset Emissions"; Rec."Fixed Asset Emissions")
+                {
+                    ToolTip = 'Specifies the enablement of default Sustainability Account emissions on the Fixed Asset card.';
+                }
                 field("Enable Value Chain Tracking"; Rec."Enable Value Chain Tracking")
                 {
                     ToolTip = 'Specifies the enablement of sustainability value entries postings through value chain operations and the visibility of these fields in operational documents and journals.';
                 }
                 field("Use All Gases As CO2e"; Rec."Use All Gases As CO2e")
+                {
+                }
+            }
+            group("Number Series")
+            {
+                Caption = 'Number Series';
+                field("ESG Standard Reporting Nos."; Rec."ESG Standard Reporting Nos.")
+                {
+                }
+                field("Posted ESG Reporting Nos."; Rec."Posted ESG Reporting Nos.")
+                {
+                }
+                field("Item Material Composition Nos."; Rec."Item Material Composition Nos.")
                 {
                 }
             }
@@ -121,6 +138,10 @@ page 6221 "Sustainability Setup"
                 field("Custom Amt. Decimal Places"; Rec."Custom Amt. Decimal Places")
                 {
                     ToolTip = 'Specifies the number of decimal places that are shown for custom amounts. The default setting, 2:5, specifies that all amounts are shown with a minimum of 2 decimal places and a maximum of 5 decimal places. You can also enter a fixed number, such as 2, which also means that amounts are shown with two decimals.';
+                }
+                field("Use Formulas In Purch. Docs"; Rec."Use Formulas In Purch. Docs")
+                {
+                    ToolTip = 'Specifies if the formula-based calculations are enabled for purchase documents.';
                 }
             }
             group(Reporting)
@@ -154,9 +175,6 @@ page 6221 "Sustainability Setup"
                 field("Energy Reporting UOM Factor"; Rec."Energy Reporting UOM Factor")
                 {
                     ToolTip = 'Specifies the unit of measure factor that is used to register Energy.';
-                }
-                field("Posted ESG Reporting Nos."; Rec."Posted ESG Reporting Nos.")
-                {
                 }
             }
         }
@@ -225,12 +243,20 @@ page 6221 "Sustainability Setup"
                 RunObject = Page "Emission Fees";
                 ToolTip = 'Set up internal carbon fees and CO2 equivalent.';
             }
+            action(Disclaimer)
+            {
+                Caption = 'Disclaimer';
+                Image = Info;
+                RunObject = Page "Sustainability Disclaimer";
+                ToolTip = 'View or add disclaimer for sustainability reports.';
+            }
         }
         area(Promoted)
         {
             actionref(SustainAccountCategory_Promoted; SustainAccountCategory) { }
             actionref(SustainabilityJournalTemplate_Promoted; SustainabilityJournalTemplate) { }
             actionref(EmissionFees_Promoted; EmissionFees) { }
+            actionref(Disclaimer_Promoted; Disclaimer) { }
         }
     }
     trigger OnOpenPage()

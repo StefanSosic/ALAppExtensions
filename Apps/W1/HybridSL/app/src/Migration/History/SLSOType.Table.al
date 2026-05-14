@@ -1,3 +1,4 @@
+#if not CLEANSCHEMA32
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,6 +11,14 @@ table 47051 "SL SOType"
     Access = Internal;
     DataClassification = CustomerContent;
     ReplicateData = false;
+    ObsoleteReason = 'Replaced by table SL SOType Buffer.';
+#if not CLEAN29
+    ObsoleteState = Pending;
+    ObsoleteTag = '29.0';
+#else
+    ObsoleteState = Removed;
+    ObsoleteTag = '32.0';
+#endif
 
     fields
     {
@@ -196,18 +205,22 @@ table 47051 "SL SOType"
         field(45; S4Future03; Decimal)
         {
             Caption = 'S4Future03';
+            AutoFormatType = 0;
         }
         field(46; S4Future04; Decimal)
         {
             Caption = 'S4Future04';
+            AutoFormatType = 0;
         }
         field(47; S4Future05; Decimal)
         {
             Caption = 'S4Future05';
+            AutoFormatType = 0;
         }
         field(48; S4Future06; Decimal)
         {
             Caption = 'S4Future06';
+            AutoFormatType = 0;
         }
         field(49; S4Future07; DateTime)
         {
@@ -288,10 +301,12 @@ table 47051 "SL SOType"
         field(68; User5; Decimal)
         {
             Caption = 'User5';
+            AutoFormatType = 0;
         }
         field(69; User6; Decimal)
         {
             Caption = 'User6';
+            AutoFormatType = 0;
         }
         field(70; User7; Text[10])
         {
@@ -323,3 +338,4 @@ table 47051 "SL SOType"
         }
     }
 }
+#endif

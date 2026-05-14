@@ -7,11 +7,16 @@ body:
       value: |
         Thanks for submitting an extensibility request.
 
+        This repository no longer accepts new pull requests, but extensibility requests are still accepted here.
+
         ⚠️⚠️ Before you start ⚠️⚠️
         Before you create a new issue, please check the following:
         🔎 Search the existing issues to avoid a duplicate.
         📖 [How to structure the requests](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/create-extensibility-request)
         📖 [Types of events by value](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/types-of-events-for-extensibility)
+        📖 [Min. requirements for IsHandled events](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-use-ishandled-min-req)
+        
+        ⚠️Note: Requests submitted through this form are analyzed by AI to support faster triage and more consistent routing.
 
   - type: textarea
     id: explaining-the-need

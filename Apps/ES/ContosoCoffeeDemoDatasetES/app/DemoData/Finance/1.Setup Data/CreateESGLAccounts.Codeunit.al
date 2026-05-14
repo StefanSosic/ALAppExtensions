@@ -5,16 +5,16 @@
 
 namespace Microsoft.DemoData.Finance;
 
-using Microsoft.Finance.GeneralLedger.Account;
-using Microsoft.Foundation.Enums;
-using Microsoft.Inventory.Setup;
 using Microsoft.DemoData.Common;
-using Microsoft.DemoData.Service;
-using Microsoft.DemoData.Manufacturing;
 using Microsoft.DemoData.FixedAsset;
 using Microsoft.DemoData.HumanResources;
 using Microsoft.DemoData.Jobs;
+using Microsoft.DemoData.Manufacturing;
+using Microsoft.DemoData.Service;
 using Microsoft.DemoTool.Helpers;
+using Microsoft.Finance.GeneralLedger.Account;
+using Microsoft.Foundation.Enums;
+using Microsoft.Inventory.Setup;
 
 codeunit 10780 "Create ES GL Accounts"
 {
@@ -82,6 +82,7 @@ codeunit 10780 "Create ES GL Accounts"
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.SubcontractedVarianceName(), '3300240');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.CapOverheadVarianceName(), '3300260');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MfgOverheadVarianceName(), '3300250');
+        ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.MaterialNonInvVarianceName(), '3300235');
 
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.FinishedGoodsName(), '3100001');
         ContosoGLAccount.AddAccountForLocalization(MfgGLAccount.WIPAccountFinishedGoodsName(), '3300280');
@@ -2641,6 +2642,8 @@ codeunit 10780 "Create ES GL Accounts"
         ContosoGLAccount.SetOverwriteData(false);
         UpdateIncomeStatmentBalanceAccount();
         UpdateAPIAccountTypeToGLAccount();
+
+        Codeunit.Run(Codeunit::"Create Deferral Template ES");
     end;
 
     local procedure UpdateIncomeStatmentBalanceAccount()

@@ -5,8 +5,8 @@
 
 namespace Microsoft.DemoData.Finance;
 
-using Microsoft.Finance.GeneralLedger.Setup;
 using Microsoft.DemoTool.Helpers;
+using Microsoft.Finance.GeneralLedger.Setup;
 
 codeunit 11364 "Create Posting Group BE"
 {
@@ -23,16 +23,15 @@ codeunit 11364 "Create Posting Group BE"
 
     local procedure InsertGenProdPostingGroup()
     var
+        FinanceModuleSetup: Record "Finance Module Setup";
         ContosoPostingGroup: Codeunit "Contoso Posting Group";
         CreateVATPostingGroupBE: codeunit "Create VAT Posting Group BE";
         CreatePostingGroup: Codeunit "Create Posting Groups";
     begin
+        FinanceModuleSetup.Get();
+
         ContosoPostingGroup.SetOverwriteData(true);
-        ContosoPostingGroup.InsertGenProductPostingGroup(NoVATPostingGroup(), MiscDescriptionLbl, CreateVATPostingGroupBE.NOVAT());
-        UpdateGenProdPostingGrp(CreatePostingGroup.FreightPostingGroup(), CreateVATPostingGroupBE.G3());
-        UpdateGenProdPostingGrp(CreatePostingGroup.RawMatPostingGroup(), CreateVATPostingGroupBE.G3());
-        UpdateGenProdPostingGrp(CreatePostingGroup.RetailPostingGroup(), CreateVATPostingGroupBE.G3());
-        UpdateGenProdPostingGrp(CreatePostingGroup.MiscPostingGroup(), CreateVATPostingGroupBE.G3());
+        ContosoPostingGroup.InsertGenProductPostingGroup(NoVATPostingGroup(), MiscDescriptionLbl, FinanceModuleSetup."VAT Prod. Post Grp. NO VAT");
         UpdateGenProdPostingGrp(CreatePostingGroup.ServicesPostingGroup(), CreateVATPostingGroupBE.S3());
         UpdateGenProdPostingGrp(CreatePostingGroup.ExportPostingGroup(), CreateVATPostingGroupBE.IMPEXP());
         ContosoPostingGroup.SetOverwriteData(false);
@@ -70,16 +69,20 @@ codeunit 11364 "Create Posting Group BE"
         ContosoGenPostingSetup.InsertGeneralPostingSetup('', NoVATPostingGroup(), '', '', CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', '', '', '', '', CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup('', CreatePostingGroup.RetailPostingGroup(), '', '', CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', '', '', '', '', CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup('', CreatePostingGroup.ServicesPostingGroup(), '', '', CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', '', '', '', '', CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup('', CreatePostingGroup.MiscPostingGroup(), '', '', CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', '', '', '', '', CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.DomesticPostingGroup(), NoVATPostingGroup(), CreateGLAccount.SalesRetailDom(), CreateBEGLAccount.PurchasesRetailDom(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.DomesticPostingGroup(), CreatePostingGroup.RetailPostingGroup(), CreateGLAccount.SalesRetailDom(), CreateBEGLAccount.PurchasesRetailDom(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.DomesticPostingGroup(), CreatePostingGroup.ServicesPostingGroup(), CreateGLAccount.SalesResourcesDom(), CreateBEGLAccount.PurchasesRetailDom(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateBEGLAccount.InventAdjRetailInt());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.DomesticPostingGroup(), CreatePostingGroup.MiscPostingGroup(), CreateGLAccount.SalesRetailDom(), CreateBEGLAccount.PurchasesRetailDom(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.EUPostingGroup(), CreatePostingGroup.RetailPostingGroup(), CreateGLAccount.SalesRetailEU(), CreateBEGLAccount.PurchasesRetailEu(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.EUPostingGroup(), CreatePostingGroup.MiscPostingGroup(), CreateGLAccount.SalesRetailEU(), CreateBEGLAccount.PurchasesRetailEu(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
 
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.ExportPostingGroup(), NoVATPostingGroup(), CreateGLAccount.SalesRetailExport(), CreateBEGLAccount.PurchasesRetailExport(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.ExportPostingGroup(), CreatePostingGroup.RetailPostingGroup(), CreateGLAccount.SalesRetailExport(), CreateBEGLAccount.PurchasesRetailExport(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.ExportPostingGroup(), CreatePostingGroup.ServicesPostingGroup(), CreateGLAccount.SalesResourcesExport(), CreateBEGLAccount.PurchasesRetailExport(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateBEGLAccount.InventAdjRetailInt());
+        ContosoGenPostingSetup.InsertGeneralPostingSetup(CreatePostingGroup.ExportPostingGroup(), CreatePostingGroup.MiscPostingGroup(), CreateGLAccount.SalesRetailExport(), CreateBEGLAccount.PurchasesRetailExport(), CreateBEGLAccount.InventAdjRetail(), CreateBEGLAccount.Goods(), '', '', CreateBEGLAccount.PaymentDiscReceived(), CreateBEGLAccount.PaymentDiscReceived(), CreateGLAccount.DiscReceivedRetail(), CreateGLAccount.DiscReceivedRetail(), CreateBEGLAccount.PurchaseCostsRetail(), CreateBEGLAccount.PurchaseCostsInterim(), CreateGLAccount.VATPayable());
         ContosoGenPostingSetup.SetOverwriteData(false);
 
         UpdatePmtDiscAccounts(CreatePostingGroup.DomesticPostingGroup(), NoVATPostingGroup(), CreateGLAccount.SalesRetailDom(), CreateBEGLAccount.PurchasesRetailDom());

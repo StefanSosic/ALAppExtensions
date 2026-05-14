@@ -5,12 +5,11 @@
 namespace Microsoft.EServices.EDocumentConnector.Microsoft365;
 
 using Microsoft.EServices.EDocument;
-using System.Utilities;
 using Microsoft.eServices.EDocument.Integration.Receive;
-using System.Telemetry;
 using System.Email;
 using System.IO;
-using Microsoft.eServices.EDocument.Processing.Import;
+using System.Telemetry;
+using System.Utilities;
 
 codeunit 6385 "Outlook Processing"
 {
@@ -47,40 +46,61 @@ codeunit 6385 "Outlook Processing"
         if EDocument."Outlook Mail Message Id" = '' then
             Error(MailMessageIdEmptyErr, EDocument."Entry No");
 
+
         Email.MarkAsRead(OutlookSetup."Email Account ID", OutlookSetup."Email Connector", EDocument."Outlook Mail Message Id");
+        Email.ApplyEmailCategory(OutlookSetup."Email Account ID", OutlookSetup."Email Connector", EDocument."Outlook Mail Message Id", GetOutlookCategoryDescription(EDocumentService));
     end;
 
     procedure ReceiveDocuments(var EDocumentService: Record "E-Document Service"; Documents: Codeunit "Temp Blob List"; ReceiveContext: Codeunit ReceiveContext)
     var
         OutlookSetup: Record "Outlook Setup";
-        TempFilters: Record "Email Retrieval Filters" temporary;
-        OutlookProcessing: Codeunit "Outlook Processing";
         FeatureTelemetry: Codeunit "Feature Telemetry";
-        DocumentsArray: JsonArray;
+        LatestReceivedDateTime: DateTime;
     begin
         CheckSetupEnabled(OutlookSetup);
-        if DailyLimitReached(EDocumentService) then begin
+        if DailyEmailLimitReached(EDocumentService) then begin
             Session.LogMessage('0000PKF', 'Daily limit for e-mails received has been reached.', Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
             exit;
         end;
 
+        if DailyAttachmentLimitReached(EDocumentService) then begin
+            Session.LogMessage('0000QJ1', 'Daily limit for e-mail attachments received has been reached.', Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
+            exit;
+        end;
         FeatureTelemetry.LogUptake('0000OGS', FeatureName(), Enum::"Feature Uptake Status"::Used);
         FeatureTelemetry.LogUsage('0000OGV', FeatureName(), Format(EDocumentService."Service Integration V2"));
-        TempFilters."Unread Emails" := true;
+        RetrieveEmailsWithRecovery(OutlookSetup, EDocumentService);
+        Session.LogMessage('0000PKG', 'Retrieved emails from the email connector', Verbosity::Normal, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName(), 'EmailsReceived', Format(RetrievedEmailInbox.Count()));
+        BuildDocumentsList(RetrievedEmailInbox, Documents);
+
+        LatestReceivedDateTime := GetLatestReceivedDateTime();
+        if LatestReceivedDateTime > OutlookSetup."Last Sync At" then begin
+            OutlookSetup.Get();
+            OutlookSetup."Last Sync At" := LatestReceivedDateTime;
+            OutlookSetup.Modify();
+        end;
+    end;
+
+    local procedure RetrieveEmailsWithRecovery(var OutlookSetup: Record "Outlook Setup"; var EDocumentService: Record "E-Document Service")
+    var
+        TempFilters: Record "Email Retrieval Filters" temporary;
+        OutlookProcessing: Codeunit "Outlook Processing";
+    begin
         TempFilters."Load Attachments" := true;
         TempFilters."Max No. of Emails" := GetMaxNoOfEmails();
         TempFilters."Earliest Email" := OutlookSetup."Last Sync At";
+        TempFilters."Category Filter Type" := TempFilters."Category Filter Type"::Exclude;
+        TempFilters.AddCategoryFilter(GetOutlookCategoryDescription(EDocumentService));
         OutlookProcessing.ConfigureForEmailRetrieval(TempFilters);
-        if not OutlookProcessing.Run() then begin // Email.RetrieveEmails() called this way to "catch" and recover
-            // If email retrieval fails, the problem may be triggered by a specific email, so we attempt to recover by pushing the date of the emails retrieved so that we skip the problematic email
-
-            // This has as a possible side-effect that we may skip some valid emails.
-            // In principle this should not happen, but if it happens then we are not completely stuck.
+        Commit();
+        if not OutlookProcessing.Run() then begin
+            // If email retrieval fails, the problem may be triggered by a specific email,
+            // so we attempt to recover by pushing the sync date forward to skip it.
+            // Side-effect: we may skip some valid emails, but we avoid getting completely stuck.
             if EDocumentService."Batch Minutes between runs" = 0 then
                 OutlookSetup."Last Sync At" := CurrentDateTime()
             else
                 OutlookSetup."Last Sync At" := OutlookSetup."Last Sync At" + (EDocumentService."Batch Minutes between runs" * 60 * 1000);
-
             if OutlookSetup."Last Sync At" > CurrentDateTime() then
                 OutlookSetup."Last Sync At" := CurrentDateTime();
             OutlookSetup.Modify();
@@ -88,12 +108,23 @@ codeunit 6385 "Outlook Processing"
             Error(RetrieveEmailsErr);
         end;
         OutlookProcessing.GetRetrievedEmailsInbox(RetrievedEmailInbox);
-        Session.LogMessage('0000PKG', 'Retrieved emails from the email connector', Verbosity::Normal, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName(), 'EmailsReceived', Format(RetrievedEmailInbox.Count()));
-        BuildDocumentsArray(RetrievedEmailInbox, DocumentsArray);
-        BuildDocumentsList(Documents, DocumentsArray);
     end;
 
-    local procedure DailyLimitReached(var EDocumentService: Record "E-Document Service"): Boolean
+    local procedure GetLatestReceivedDateTime(): DateTime
+    var
+        LatestDateTime: DateTime;
+    begin
+        LatestDateTime := 0DT;
+        if not RetrievedEmailInbox.FindSet() then
+            exit(0DT);
+        repeat
+            if RetrievedEmailInbox."Received DateTime" > LatestDateTime then
+                LatestDateTime := RetrievedEmailInbox."Received DateTime";
+        until RetrievedEmailInbox.Next() = 0;
+        exit(LatestDateTime);
+    end;
+
+    local procedure DailyEmailLimitReached(var EDocumentService: Record "E-Document Service"): Boolean
     var
         EDocument: Record "E-Document";
         EmailsPer24HLimit: Integer;
@@ -111,6 +142,23 @@ codeunit 6385 "Outlook Processing"
         exit(ExternalMailMessageIds.Count() >= EmailsPer24HLimit)
     end;
 
+    local procedure DailyAttachmentLimitReached(var EDocumentService: Record "E-Document Service"): Boolean
+    var
+        EDocument: Record "E-Document";
+        AttachmentsPer24HLimit: Integer;
+    begin
+        AttachmentsPer24HLimit := GetAttachmentsPer24HLimit();
+        EDocument.ReadIsolation := IsolationLevel::ReadCommitted;
+        EDocument.SetRange(Service, EDocumentService.Code);
+        EDocument.SetRange(SystemCreatedAt, CurrentDateTime() - (24 * 3600 * 1000), CurrentDateTime());
+        exit(EDocument.Count() >= AttachmentsPer24HLimit)
+    end;
+
+    local procedure GetAttachmentsPer24HLimit(): Integer
+    begin
+        exit(500);
+    end;
+
     local procedure GetEmailsPer24HLimit(): Integer
     begin
         exit(100);
@@ -119,6 +167,11 @@ codeunit 6385 "Outlook Processing"
     local procedure GetMaxNoOfEmails(): Integer
     begin
         exit(50);
+    end;
+
+    local procedure GetMaxNoOfAttachmentsPerEmail(): Integer
+    begin
+        exit(10);
     end;
 
     local procedure CheckSetupEnabled(var OutlookSetup: Record "Outlook Setup")
@@ -134,12 +187,16 @@ codeunit 6385 "Outlook Processing"
         exit('Microsoft 365 E-Document Connector')
     end;
 
-    local procedure BuildDocumentsArray(var EmailInbox: Record "Email Inbox"; var DocumentsArray: JsonArray)
+    local procedure BuildDocumentsList(var EmailInbox: Record "Email Inbox"; Documents: Codeunit "Temp Blob List")
     var
         EmailMessage: Codeunit "Email Message";
         TempBlob: Codeunit "Temp Blob";
         Attachment: JsonObject;
+        EmailAttachments: JsonArray;
+        AttachmentJson: JsonToken;
         TelemetryCustomDimensions: Dictionary of [Text, Text];
+        OutStream: OutStream;
+        AttachmentTxt: Text;
         AttachmentsAdded, IgnoredBecauseExisting, AttachmentsLoaded : Integer;
     begin
         if not EmailInbox.FindSet() then
@@ -149,14 +206,14 @@ codeunit 6385 "Outlook Processing"
                 Session.LogMessage('0000PKH', 'E-mail retrieved but not found afterwards', Verbosity::Error, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
                 continue;
             end;
+            Clear(EmailAttachments);
             AttachmentsLoaded := 0;
             AttachmentsAdded := 0;
             IgnoredBecauseExisting := 0;
             if EmailMessage.Attachments_First() then
                 repeat
-                    if not IgnoreMailAttachment(EmailMessage, IgnoredBecauseExisting) then begin
+                    if not IgnoreMailAttachment(EmailMessage, EmailInbox."External Message Id", IgnoredBecauseExisting) then begin
                         Clear(Attachment);
-                        Clear(TempBlob);
                         Attachment.Add('emailInboxId', EmailInbox.Id);
                         Attachment.Add('messageid', EmailInbox."Message Id");
                         Attachment.Add('externalmessageid', EmailInbox."External Message Id");
@@ -166,27 +223,21 @@ codeunit 6385 "Outlook Processing"
                         Attachment.Add('contentType', EmailMessage.Attachments_GetContentType());
                         Attachment.Add('contentId', EmailMessage.Attachments_GetContentId());
                         Attachment.Add('name', EmailMessage.Attachments_GetName());
-                        DocumentsArray.Add(Attachment);
+                        EmailAttachments.Add(Attachment);
                         AttachmentsAdded += 1;
                     end;
                     AttachmentsLoaded += 1;
                 until EmailMessage.Attachments_Next() = 0;
-            // if an e-mail message has no attachments of supported type, add it as well
-            // it must be represented as an e-document with no attachment
-            if (AttachmentsAdded = 0) and (IgnoredBecauseExisting = 0) then begin
-                Clear(Attachment);
-                Clear(TempBlob);
-                Attachment.Add('emailInboxId', EmailInbox.Id);
-                Attachment.Add('messageid', EmailInbox."Message Id");
-                Attachment.Add('externalmessageid', EmailInbox."External Message Id");
-                Attachment.Add('receiveddatetime', EmailInbox."Received DateTime");
-                Attachment.Add('id', 0);
-                Attachment.Add('size', 0);
-                Attachment.Add('contentType', 'none');
-                Attachment.Add('contentId', 'none');
-                Attachment.Add('name', NoSupportedAttachmentTxt);
-                DocumentsArray.Add(Attachment);
-            end;
+            if AttachmentsAdded <= GetMaxNoOfAttachmentsPerEmail() then
+                foreach AttachmentJson in EmailAttachments do begin
+                    Clear(TempBlob);
+                    TempBlob.CreateOutStream(OutStream, TextEncoding::UTF8);
+                    AttachmentJson.WriteTo(AttachmentTxt);
+                    OutStream.WriteText(AttachmentTxt);
+                    Documents.Add(TempBlob);
+                end
+            else
+                AttachmentsAdded := 0;
             Clear(TelemetryCustomDimensions);
             TelemetryCustomDimensions.Add('Category', FeatureName());
             TelemetryCustomDimensions.Add('ReceivedDateTime', Format(EmailInbox."Received DateTime"));
@@ -197,45 +248,43 @@ codeunit 6385 "Outlook Processing"
         until EmailInbox.Next() = 0;
     end;
 
-    internal procedure BuildDocumentsList(Documents: Codeunit "Temp Blob List"; var AttachmentsJson: JsonArray)
+    internal procedure IgnoreMailAttachment(AttachmentLength: Integer; AttachmentContentType: Text; FileName: Text): Boolean // this procedure is internal to be called by tests
     var
-        TempBlob: Codeunit "Temp Blob";
-        AttachmentJson: JsonToken;
-        OutStream: OutStream;
-        AttachmentTxt: Text;
-    begin
-        foreach AttachmentJson in AttachmentsJson do begin
-            Clear(TempBlob);
-            TempBlob.CreateOutStream(OutStream, TextEncoding::UTF8);
-            AttachmentJson.WriteTo(AttachmentTxt);
-            OutStream.WriteText(AttachmentTxt);
-            Documents.Add(TempBlob);
-        end;
-    end;
-
-    internal procedure IgnoreMailAttachment(AttachmentLength: Integer; AttachmentContentType: Text): Boolean // this procedure is internal to be called by tests
+        FileManagement: Codeunit "File Management";
+        Extension: Text;
     begin
         if AttachmentLength > SizeThreshold() then begin
             Session.LogMessage('0000PKI', 'Ignoring attachment because it exceeds size threshold.', Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
             exit(true);
         end;
 
-        if LowerCase(AttachmentContentType) <> 'application/pdf' then begin
-            Session.LogMessage('0000PKJ', 'Ignoring attachment because it the attachment is not of a supported type.', Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
-            exit(true);
+        AttachmentContentType := LowerCase(AttachmentContentType);
+
+        if AttachmentContentType = 'application/pdf' then
+            exit(false);
+
+        if AttachmentContentType = 'application/octet-stream' then begin
+            Extension := FileManagement.GetExtension(FileName);
+            if LowerCase(Extension) = 'pdf' then
+                exit(false);
         end;
-        exit(false);
+
+        Session.LogMessage('0000PKJ', 'Ignoring attachment because it the attachment is not of a supported type.', Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
+        exit(true);
     end;
 
-    local procedure IgnoreMailAttachment(EmailMessage: Codeunit "Email Message"; var IgnoredBecauseExisting: Integer): Boolean
+    local procedure IgnoreMailAttachment(EmailMessage: Codeunit "Email Message"; ExternalMessageId: Text[2048]; var IgnoredBecauseExisting: Integer): Boolean
     var
         EDocument: Record "E-Document";
+        TempBlob: Codeunit "Temp Blob";
+        InStream: InStream;
+        ExceedsPageCountThreshold: Boolean;
     begin
-        if IgnoreMailAttachment(EmailMessage.Attachments_GetLength(), EmailMessage.Attachments_GetContentType()) then
+        if IgnoreMailAttachment(EmailMessage.Attachments_GetLength(), EmailMessage.Attachments_GetContentType(), EmailMessage.Attachments_GetName()) then
             exit(true);
 
         EDocument.ReadIsolation := IsolationLevel::ReadCommitted;
-        EDocument.SetRange("Outlook Mail Message Id", EmailMessage.GetExternalId());
+        EDocument.SetRange("Outlook Mail Message Id", ExternalMessageId);
         EDocument.SetRange("Outlook Message Attachment Id", Format(EmailMessage.Attachments_GetContentId()));
         if not EDocument.IsEmpty() then begin
             IgnoredBecauseExisting += 1;
@@ -243,6 +292,14 @@ codeunit 6385 "Outlook Processing"
             exit(true);
         end;
 
+        TempBlob.CreateInStream(InStream, TextEncoding::UTF8);
+        EmailMessage.Attachments_GetContent(InStream);
+        if not DocumentExceedsPageCountThreshold(InStream, ExceedsPageCountThreshold) then
+            Session.LogMessage('0000PMR', PageCountCallFailedTelemetryTxt, Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
+        if ExceedsPageCountThreshold then begin
+            Session.LogMessage('0000PKT', StrSubstNo(PageCountExceededTelemetryTxt, Format(PageCountThreshold())), Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
+            exit(true)
+        end;
         exit(false)
     end;
 
@@ -273,7 +330,6 @@ codeunit 6385 "Outlook Processing"
         ReceivedDateTime: DateTime;
         MessageIdGuid, ExternalMessageIdGuid : Guid;
         ContentId: Text[2048];
-        ExceedsPageCountThreshold: Boolean;
     begin
         CheckSetupEnabled(OutlookSetup);
 
@@ -282,11 +338,6 @@ codeunit 6385 "Outlook Processing"
 
         ExtractMessageAndAttachmentIds(DocumentMetadataBlob, EmailInboxId, MessageId, ExternalMessageId, FileId, AttachmentId, ReceivedDateTime, ContentType, ContentId);
         ReceiveContext.SetName(CopyStr(FileId, 1, 250));
-
-        if ReceivedDateTime > OutlookSetup."Last Sync At" then begin
-            OutlookSetup."Last Sync At" := ReceivedDateTime;
-            OutlookSetup.Modify();
-        end;
 
         if not EmailInbox.Get(EmailInboxId) then
             Error(InvalidAttachmentIdErr);
@@ -303,18 +354,6 @@ codeunit 6385 "Outlook Processing"
         if Evaluate(MessageIdGuid, MessageId) then
             EDocument."Mail Message Id" := MessageIdGuid;
 
-        // this is the representation of email without supported attachment. register it in E-Document table.
-        if (AttachmentId = 0) and (ContentType = 'none') then
-            if EmailMessage.Get(MessageId) then begin
-                EDocument."Structure Data Impl." := "Structure Received E-Doc."::"Already Structured";
-                EDocument."Read into Draft Impl." := "E-Doc. Read Into Draft"::"Blank Draft";
-                ReceiveContext.GetTempBlob().CreateOutStream(DocumentOutStream, TextEncoding::UTF8);
-                if EmailMessage.Get(MessageId) then;
-                DocumentOutStream.WriteText(EmailMessage.GetBody());
-                EDocument.Modify();
-                exit;
-            end;
-
         if EmailMessage.Get(MessageId) then
             if EmailMessage.Attachments_First() then
                 repeat
@@ -322,20 +361,11 @@ codeunit 6385 "Outlook Processing"
                         AttachmentFound := true;
                         TempBlob.CreateInStream(InStream, TextEncoding::UTF8);
                         EmailMessage.Attachments_GetContent(InStream);
-                        if not DocumentExceedsPageCountThreshold(InStream, ExceedsPageCountThreshold) then
-                            Session.LogMessage('0000PMR', PageCountCallFailedTelemetryTxt, Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
-                        if ExceedsPageCountThreshold then begin
-                            Session.LogMessage('0000PKT', StrSubstNo(PageCountExceededTelemetryTxt, Format(PageCountThreshold())), Verbosity::Warning, DataClassification::SystemMetadata, TelemetryScope::All, 'Category', FeatureName());
-                            EDocument."Structure Data Impl." := "Structure Received E-Doc."::"Already Structured";
-                            EDocument."Read into Draft Impl." := "E-Doc. Read Into Draft"::"Blank Draft";
-                            EDocumentErrorHelper.LogWarningMessage(EDocument, EDocument, EDocument.FieldNo("Structured Data Entry No."), StrSubstNo(PageCountExceededTxt, FileId, Format(PageCountThreshold())));
-                        end else begin
-                            ReceiveContext.SetFileFormat("E-Doc. File Format"::PDF);
-                            ReceiveContext.GetTempBlob().CreateOutStream(DocumentOutStream, TextEncoding::UTF8);
-                            CopyStream(DocumentOutStream, InStream);
-                            if not ReceiveContext.GetTempBlob().HasValue() then
-                                EDocumentErrorHelper.LogSimpleErrorMessage(EDocument, StrSubstNo(NoContentErr, FileId));
-                        end;
+                        ReceiveContext.SetFileFormat("E-Doc. File Format"::PDF);
+                        ReceiveContext.GetTempBlob().CreateOutStream(DocumentOutStream, TextEncoding::UTF8);
+                        CopyStream(DocumentOutStream, InStream);
+                        if not ReceiveContext.GetTempBlob().HasValue() then
+                            EDocumentErrorHelper.LogSimpleErrorMessage(EDocument, StrSubstNo(NoContentErr, FileId));
                         EDocument.Modify();
                     end;
                 until (EmailMessage.Attachments_Next() = 0) or AttachmentFound;
@@ -398,6 +428,16 @@ codeunit 6385 "Outlook Processing"
 #pragma warning restore AL0432
 #endif
 
+    local procedure GetOutlookCategoryDescription(EDocumentService: Record "E-Document Service"): Text
+    var
+        EDocM365ConnEvents: Codeunit "E-Doc. M365 Conn. Events";
+        CategoryDescription: Text;
+    begin
+        CategoryDescription := OutlookCategoryTok;
+        EDocM365ConnEvents.OnGetOutlookCategoryDescription(EDocumentService, CategoryDescription);
+        exit(CategoryDescription);
+    end;
+
     var
         TempEmailRetrievalFilters: Record "Email Retrieval Filters" temporary;
         RetrievedEmailInbox: Record "Email Inbox";
@@ -407,10 +447,9 @@ codeunit 6385 "Outlook Processing"
         MailMessageIdEmptyErr: Label 'Mail Message Id is empty on e-document %1.', Comment = '%1 - an integer';
         InvalidAttachmentIdErr: Label 'Failed to determine id for attachment %1.', Comment = '%1 - a file name';
         InvalidAttachmentReceivedDateTimeErr: Label 'Failed to determine received date time for attachment %1.', Comment = '%1 - a file name';
-        NoSupportedAttachmentTxt: Label 'E-mail with no attachment of supported type.';
         RetrieveEmailsErr: Label 'Failed to retrieve emails from the email connector.';
         ProcessingEmailTxt: label 'Processing email.', Locked = true;
-        PageCountExceededTxt: Label 'Attachment %1 was ignored because it exceeds the feature limit of %2 pages.', Comment = '%1 - file name, %2 - an integer';
         PageCountExceededTelemetryTxt: label 'PDF Attachment ignored because it exceeds page count of %1.', Locked = true;
         PageCountCallFailedTelemetryTxt: label 'Unable to calculate page count for PDF Attachment.', Locked = true;
+        OutlookCategoryTok: Label 'Processed by Business Central', Locked = true;
 }
